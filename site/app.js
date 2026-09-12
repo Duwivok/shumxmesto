@@ -4,6 +4,7 @@ const PAGES = new Set(["home", "lineup", "bar", "rsvp"]);
 
 const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
+const navigationArtwork = [...document.querySelectorAll("[data-navigation]")];
 const navigationButtons = [...document.querySelectorAll("[data-target]")];
 const cigaretteButton = document.querySelector("[data-cigarette]");
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
@@ -125,6 +126,10 @@ function showPage(page, { updateUrl = true } = {}) {
     background.classList.toggle("is-active", background.dataset.background === nextPage);
   });
 
+  navigationArtwork.forEach((artwork) => {
+    artwork.classList.toggle("is-active", artwork.dataset.navigation === nextPage);
+  });
+
   navigationButtons.forEach((button) => {
     if (button.dataset.target === nextPage) {
       button.setAttribute("aria-current", "page");
@@ -166,7 +171,7 @@ window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: 
 
 showPage(pageFromHash(), { updateUrl: false });
 
-const preloadedImages = [...backgrounds, document.querySelector(".navigation-art")];
+const preloadedImages = [...backgrounds, ...navigationArtwork];
 
 Promise.all(preloadedImages.map(imageReady))
   .catch((error) => console.error(error))

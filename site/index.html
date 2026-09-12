@@ -10,7 +10,10 @@
     <link rel="preload" as="image" href="backgrounds/lineup.png" />
     <link rel="preload" as="image" href="backgrounds/bar.png" />
     <link rel="preload" as="image" href="backgrounds/rsvp.png" />
-    <link rel="preload" as="image" href="navigation/nav.png" />
+    <link rel="preload" as="image" href="navigation/nav-home.png" />
+    <link rel="preload" as="image" href="navigation/nav-lineup.png" />
+    <link rel="preload" as="image" href="navigation/nav-bar.png" />
+    <link rel="preload" as="image" href="navigation/nav-rsvp.png" />
     <link rel="preload" as="image" href="video-poster.png" />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -107,7 +110,34 @@
         </button>
 
         <div class="navigation">
-          <img class="navigation-art" src="navigation/nav.png" alt="" aria-hidden="true" />
+          <img
+            class="navigation-art is-active"
+            data-navigation="home"
+            src="navigation/nav-home.png"
+            alt=""
+            aria-hidden="true"
+          />
+          <img
+            class="navigation-art"
+            data-navigation="lineup"
+            src="navigation/nav-lineup.png"
+            alt=""
+            aria-hidden="true"
+          />
+          <img
+            class="navigation-art"
+            data-navigation="bar"
+            src="navigation/nav-bar.png"
+            alt=""
+            aria-hidden="true"
+          />
+          <img
+            class="navigation-art"
+            data-navigation="rsvp"
+            src="navigation/nav-rsvp.png"
+            alt=""
+            aria-hidden="true"
+          />
 
           <nav class="navigation-hit-areas" aria-label="Основная навигация">
             <button class="nav-hit" type="button" data-target="lineup" aria-label="Лайн-ап"></button>

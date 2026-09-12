@@ -309,6 +309,13 @@ button {
 
 .navigation-art {
   z-index: 0;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.navigation-art.is-active {
+  visibility: visible;
+  opacity: 1;
 }
 
 .navigation-hit-areas {
