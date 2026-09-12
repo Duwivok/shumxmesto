@@ -4,7 +4,6 @@ const DIGIT_ASSET_URLS = Object.freeze(
   ),
 );
 
-const GLOW_ASSET_URL = new URL("glow/timer-glow.webm", import.meta.url).href;
 const preloadRequests = new Map();
 
 function prepareVideo(video) {
@@ -69,10 +68,6 @@ export function digitAssetUrl(digit) {
 
 export function loadDigitAsset(video, digit) {
   return loadVideoSource(video, digitAssetUrl(digit));
-}
-
-export function loadGlowAsset(video) {
-  return loadVideoSource(video, GLOW_ASSET_URL);
 }
 
 function preloadVideoAsset(source) {

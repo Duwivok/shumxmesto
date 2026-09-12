@@ -1,6 +1,5 @@
 import {
   loadDigitAsset,
-  loadGlowAsset,
   playVideo,
   preloadDigitAssets,
 } from "./assets-loader.js";
@@ -54,14 +53,12 @@ class CountdownTimer {
     }
 
     root.dataset.targetLocal = config.targetLocalDateTime;
-    root.querySelectorAll("[data-timer-screen]").forEach((element, index) => {
+    root.querySelectorAll("[data-timer-screen]").forEach((element) => {
       const name = element.dataset.timerScreen;
       this.screens.set(name, {
         element,
-        index,
         value: "",
         digitVideos: [...element.querySelectorAll("[data-timer-digit]")],
-        glowVideo: element.querySelector("[data-timer-glow]"),
       });
     });
 
@@ -69,33 +66,8 @@ class CountdownTimer {
     this.handleVisibilityChange = () => this.syncVisibility();
     document.addEventListener("visibilitychange", this.handleVisibilityChange);
 
-    this.loadGlowLayers();
     this.updateCountdown();
     runWhenIdle(() => preloadDigitAssets());
-  }
-
-  loadGlowLayers() {
-    this.screens.forEach((screen) => {
-      if (!screen.glowVideo) {
-        return;
-      }
-
-      loadGlowAsset(screen.glowVideo)
-        .then((video) => {
-          screen.element.classList.add("is-glow-ready");
-
-          if (Number.isFinite(video.duration) && video.duration > 0) {
-            video.currentTime = (screen.index * 1.37) % video.duration;
-          }
-
-          if (video.seeking) {
-            video.addEventListener("seeked", () => this.syncVideo(video), { once: true });
-          } else {
-            this.syncVideo(video);
-          }
-        })
-        .catch((error) => console.error(error));
-    });
   }
 
   updateScreen(name, value) {

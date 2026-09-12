@@ -29,9 +29,7 @@
         <div class="timer-system" data-countdown role="timer" aria-live="off">
           <div class="timer-screen" data-timer-screen="days" aria-label="DAYS: 00">
             <div class="timer-screen-base" data-timer-clip aria-hidden="true"></div>
-            <div class="timer-glow-surface" data-timer-glow-surface aria-hidden="true">
-              <video class="timer-glow" data-timer-glow></video>
-            </div>
+            <div class="timer-glow-surface" data-timer-glow-surface aria-hidden="true"></div>
             <div class="timer-screen-clip" data-timer-clip>
               <div class="timer-surface" data-timer-surface>
                 <div class="timer-digits" aria-hidden="true">
@@ -46,9 +44,7 @@
 
           <div class="timer-screen" data-timer-screen="hours" aria-label="HOURS: 00">
             <div class="timer-screen-base" data-timer-clip aria-hidden="true"></div>
-            <div class="timer-glow-surface" data-timer-glow-surface aria-hidden="true">
-              <video class="timer-glow" data-timer-glow></video>
-            </div>
+            <div class="timer-glow-surface" data-timer-glow-surface aria-hidden="true"></div>
             <div class="timer-screen-clip" data-timer-clip>
               <div class="timer-surface" data-timer-surface>
                 <div class="timer-digits" aria-hidden="true">
@@ -63,9 +59,7 @@
 
           <div class="timer-screen" data-timer-screen="minutes" aria-label="MINUTES: 00">
             <div class="timer-screen-base" data-timer-clip aria-hidden="true"></div>
-            <div class="timer-glow-surface" data-timer-glow-surface aria-hidden="true">
-              <video class="timer-glow" data-timer-glow></video>
-            </div>
+            <div class="timer-glow-surface" data-timer-glow-surface aria-hidden="true"></div>
             <div class="timer-screen-clip" data-timer-clip>
               <div class="timer-surface" data-timer-surface>
                 <div class="timer-digits" aria-hidden="true">
@@ -85,23 +79,25 @@
           data-cigarette
           aria-label="Запустить анимацию сигареты"
         >
-          <img
-            class="rsvp-cigarette-poster"
-            src="video-poster.png"
-            alt=""
-            draggable="false"
-          />
-          <video
-            class="rsvp-cigarette-video"
-            data-cigarette-video
-            src="1%20(3)%20(2).webm"
-            preload="auto"
-            muted
-            playsinline
-            webkit-playsinline
-            disablepictureinpicture
-            aria-hidden="true"
-          ></video>
+          <span class="rsvp-cigarette-media">
+            <img
+              class="rsvp-cigarette-poster"
+              src="video-poster.png"
+              alt=""
+              draggable="false"
+            />
+            <video
+              class="rsvp-cigarette-video"
+              data-cigarette-video
+              src="1%20(3)%20(2).webm"
+              preload="auto"
+              muted
+              playsinline
+              webkit-playsinline
+              disablepictureinpicture
+              aria-hidden="true"
+            ></video>
+          </span>
         </button>
 
         <div class="navigation">

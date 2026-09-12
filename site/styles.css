@@ -132,6 +132,23 @@ button {
   transition: opacity 120ms linear;
 }
 
+.timer-glow-surface::before {
+  position: absolute;
+  inset: -22% -26%;
+  border-radius: 35%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 228, 247, 0.58) 0 14%,
+    rgba(255, 31, 154, 0.42) 30%,
+    rgba(219, 0, 126, 0.2) 52%,
+    transparent 76%
+  );
+  content: "";
+  filter: blur(7px);
+  transform: scale(0.96);
+  animation: timer-glow-pulse 2.8s ease-in-out infinite alternate;
+}
+
 .timer-screen-clip {
   z-index: 2;
   overflow: hidden;
@@ -151,7 +168,7 @@ button {
   opacity: 1;
 }
 
-.timer-screen.is-ready.is-glow-ready .timer-glow-surface {
+.timer-screen.is-ready .timer-glow-surface {
   opacity: 1;
 }
 
@@ -159,19 +176,6 @@ button {
 .timer-label-slot,
 .timer-screen-fx {
   position: absolute;
-}
-
-.timer-glow {
-  position: absolute;
-  top: -60px;
-  left: -90px;
-  display: block;
-  width: 360px;
-  height: 240px;
-  border: 0;
-  opacity: 0.38;
-  object-fit: fill;
-  filter: saturate(1.12) contrast(1.04);
 }
 
 .timer-digits {
@@ -246,17 +250,29 @@ button {
   pointer-events: auto;
 }
 
-.rsvp-cigarette-poster,
-.rsvp-cigarette-video {
+.rsvp-cigarette-media {
   position: absolute;
   top: 50%;
   left: 50%;
-  display: block;
   width: 110%;
-  height: auto;
-  aspect-ratio: 1;
-  object-fit: contain;
   transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.rsvp-cigarette-media::before {
+  display: block;
+  padding-top: 100%;
+  content: "";
+}
+
+.rsvp-cigarette-poster,
+.rsvp-cigarette-video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -328,6 +344,18 @@ button {
   pointer-events: none;
 }
 
+@keyframes timer-glow-pulse {
+  from {
+    opacity: 0.7;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -339,5 +367,9 @@ button {
   .timer-glow-surface,
   .timer-surface {
     transition: none;
+  }
+
+  .timer-glow-surface::before {
+    animation: none;
   }
 }
