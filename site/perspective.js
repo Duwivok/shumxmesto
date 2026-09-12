@@ -148,6 +148,8 @@ export class PerspectiveLayout {
       this.screens.set(name, {
         element,
         surface: element.querySelector("[data-timer-surface]"),
+        glowSurface: element.querySelector("[data-timer-glow-surface]"),
+        clipElements: [...element.querySelectorAll("[data-timer-clip]")],
         quad: definition.quad.map((point) => [...point]),
         maskUrl: definition.maskUrl,
       });
@@ -185,8 +187,10 @@ export class PerspectiveLayout {
   updateClipPaths() {
     this.screens.forEach((screen) => {
       const clipPath = clipPathForQuad(screen.quad);
-      screen.element.style.clipPath = clipPath;
-      screen.element.style.webkitClipPath = clipPath;
+      screen.clipElements.forEach((element) => {
+        element.style.clipPath = clipPath;
+        element.style.webkitClipPath = clipPath;
+      });
       screen.element.dataset.maskSource = screen.maskUrl;
     });
   }
@@ -216,16 +220,16 @@ export class PerspectiveLayout {
     const scaleY = height / DESIGN_SIZE.height;
 
     this.screens.forEach((screen) => {
-      if (!screen.surface) {
-        return;
-      }
-
       const targetQuad = screen.quad.map(([x, y]) => [x * scaleX, y * scaleY]);
-      const sourceWidth = screen.surface.offsetWidth || 200;
-      const sourceHeight = screen.surface.offsetHeight || 100;
-      screen.surface.style.transform = matrixToCss(
-        homographyMatrix(sourceWidth, sourceHeight, targetQuad),
-      );
+      [screen.surface, screen.glowSurface].forEach((surface) => {
+        if (!surface) {
+          return;
+        }
+
+        surface.style.transform = matrixToCss(
+          homographyMatrix(surface.offsetWidth, surface.offsetHeight, targetQuad),
+        );
+      });
     });
   }
 

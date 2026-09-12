@@ -95,60 +95,92 @@ button {
 }
 
 .timer-screen {
-  overflow: hidden;
-  contain: strict;
+  overflow: visible;
 }
 
-.timer-surface {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 200px;
-  height: 100px;
-  overflow: hidden;
-  opacity: 0;
-  background: #030003;
-  transform-origin: 0 0;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
-  will-change: transform;
-  transition: opacity 120ms linear;
-}
-
-.timer-screen.is-ready .timer-surface {
-  opacity: 1;
-}
-
-.timer-glow-layer,
-.timer-digits,
-.timer-screen-fx {
+.timer-screen-base,
+.timer-screen-clip {
   position: absolute;
   inset: 0;
 }
 
-.timer-glow-layer {
+.timer-screen-base {
   z-index: 0;
+  opacity: 0;
+  background: #030004;
+  transition: opacity 120ms linear;
+}
+
+.timer-glow-surface,
+.timer-surface {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.timer-glow-surface {
+  z-index: 1;
+  width: 180px;
+  height: 120px;
+  overflow: visible;
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 120ms linear;
+}
+
+.timer-screen-clip {
+  z-index: 2;
   overflow: hidden;
-  background: #14000b;
+}
+
+.timer-surface {
+  width: 200px;
+  height: 100px;
+  overflow: hidden;
+  opacity: 0;
+  background: transparent;
+  transition: opacity 120ms linear;
+}
+
+.timer-screen.is-ready .timer-screen-base,
+.timer-screen.is-ready .timer-surface {
+  opacity: 1;
+}
+
+.timer-screen.is-ready.is-glow-ready .timer-glow-surface {
+  opacity: 1;
+}
+
+.timer-digits,
+.timer-label-slot,
+.timer-screen-fx {
+  position: absolute;
 }
 
 .timer-glow {
   position: absolute;
-  top: 0;
-  left: -15%;
+  top: -60px;
+  left: -90px;
   display: block;
-  width: 130%;
-  height: 100%;
+  width: 360px;
+  height: 240px;
   border: 0;
-  opacity: 0.42;
+  opacity: 0.38;
   object-fit: fill;
-  mix-blend-mode: screen;
-  filter: blur(1px) saturate(1.15) contrast(1.08);
+  filter: saturate(1.12) contrast(1.04);
 }
 
 .timer-digits {
   z-index: 1;
+  top: 0;
+  right: 0;
+  left: 0;
   display: grid;
+  height: 72%;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -163,13 +195,22 @@ button {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  object-fit: contain;
   mix-blend-mode: screen;
   filter: saturate(1.08) contrast(1.08) brightness(1.03);
 }
 
-.timer-screen-fx {
+.timer-label-slot {
   z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 28%;
+}
+
+.timer-screen-fx {
+  z-index: 3;
+  inset: 0;
   background:
     linear-gradient(115deg, rgba(255, 255, 255, 0.12), transparent 25%, transparent 72%, rgba(255, 31, 154, 0.08)),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px);
@@ -294,6 +335,8 @@ button {
     scroll-behavior: auto !important;
   }
 
+  .timer-screen-base,
+  .timer-glow-surface,
   .timer-surface {
     transition: none;
   }

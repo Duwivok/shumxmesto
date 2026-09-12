@@ -82,6 +82,8 @@ class CountdownTimer {
 
       loadGlowAsset(screen.glowVideo)
         .then((video) => {
+          screen.element.classList.add("is-glow-ready");
+
           if (Number.isFinite(video.duration) && video.duration > 0) {
             video.currentTime = (screen.index * 1.37) % video.duration;
           }
