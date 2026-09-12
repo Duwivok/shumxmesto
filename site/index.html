@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <title>SHÜM</title>
+
+    <link rel="preload" as="image" href="backgrounds/home.png" />
+    <link rel="preload" as="image" href="backgrounds/lineup.png" />
+    <link rel="preload" as="image" href="backgrounds/bar.png" />
+    <link rel="preload" as="image" href="backgrounds/rsvp.png" />
+    <link rel="preload" as="image" href="navigation/nav.png" />
+    <link rel="preload" as="image" href="video-poster.png" />
+    <link rel="preload" as="video" href="1%20(3)%20(2).webm" type="video/webm" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app" data-app data-page="home" data-ready="false">
+      <div class="scene" aria-live="polite">
+        <!-- Keeping every screen mounted makes switching instant and flash-free. -->
+        <div class="backgrounds" aria-hidden="true">
+          <img class="background is-active" data-background="home" src="backgrounds/home.png" alt="" />
+          <img class="background" data-background="lineup" src="backgrounds/lineup.png" alt="" />
+          <img class="background" data-background="bar" src="backgrounds/bar.png" alt="" />
+          <img class="background" data-background="rsvp" src="backgrounds/rsvp.png" alt="" />
+        </div>
+
+        <div class="timer-system" data-countdown role="timer" aria-live="off">
+          <div class="timer-screen" data-timer-screen="days" aria-label="DAYS: 00">
+            <div class="timer-surface" data-timer-surface>
+              <div class="timer-glow-layer" aria-hidden="true">
+                <video class="timer-glow" data-timer-glow></video>
+              </div>
+              <div class="timer-digits" aria-hidden="true">
+                <span class="timer-digit"><video data-timer-digit></video></span>
+                <span class="timer-digit"><video data-timer-digit></video></span>
+              </div>
+              <div class="timer-screen-fx" aria-hidden="true"></div>
+            </div>
+          </div>
+
+          <div class="timer-screen" data-timer-screen="hours" aria-label="HOURS: 00">
+            <div class="timer-surface" data-timer-surface>
+              <div class="timer-glow-layer" aria-hidden="true">
+                <video class="timer-glow" data-timer-glow></video>
+              </div>
+              <div class="timer-digits" aria-hidden="true">
+                <span class="timer-digit"><video data-timer-digit></video></span>
+                <span class="timer-digit"><video data-timer-digit></video></span>
+              </div>
+              <div class="timer-screen-fx" aria-hidden="true"></div>
+            </div>
+          </div>
+
+          <div class="timer-screen" data-timer-screen="minutes" aria-label="MINUTES: 00">
+            <div class="timer-surface" data-timer-surface>
+              <div class="timer-glow-layer" aria-hidden="true">
+                <video class="timer-glow" data-timer-glow></video>
+              </div>
+              <div class="timer-digits" aria-hidden="true">
+                <span class="timer-digit"><video data-timer-digit></video></span>
+                <span class="timer-digit"><video data-timer-digit></video></span>
+              </div>
+              <div class="timer-screen-fx" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          class="rsvp-cigarette"
+          type="button"
+          data-cigarette
+          aria-label="Запустить анимацию сигареты"
+        >
+          <img
+            class="rsvp-cigarette-poster"
+            src="video-poster.png"
+            alt=""
+            draggable="false"
+          />
+          <video
+            class="rsvp-cigarette-video"
+            data-cigarette-video
+            src="1%20(3)%20(2).webm"
+            preload="auto"
+            muted
+            playsinline
+            webkit-playsinline
+            disablepictureinpicture
+            aria-hidden="true"
+          ></video>
+        </button>
+
+        <div class="navigation">
+          <img class="navigation-art" src="navigation/nav.png" alt="" aria-hidden="true" />
+
+          <nav class="navigation-hit-areas" aria-label="Основная навигация">
+            <button class="nav-hit" type="button" data-target="lineup" aria-label="Лайн-ап"></button>
+            <button class="nav-hit" type="button" data-target="home" aria-label="SHÜM — главная"></button>
+            <button class="nav-hit" type="button" data-target="bar" aria-label="Бар"></button>
+            <button class="nav-hit" type="button" data-target="rsvp" aria-label="RSVP"></button>
+          </nav>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
