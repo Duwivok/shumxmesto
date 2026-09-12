@@ -1,12 +1,7 @@
 $BOT_TOKEN = $env:TELEGRAM_BOT_TOKEN
-$MINIAPP_URL = $env:MINIAPP_URL
 
 if ([string]::IsNullOrWhiteSpace($BOT_TOKEN)) {
     throw "TELEGRAM_BOT_TOKEN environment variable is not set. Set it before running this script."
-}
-
-if ([string]::IsNullOrWhiteSpace($MINIAPP_URL)) {
-    throw "MINIAPP_URL environment variable is not set. Set it before running this script."
 }
 
 $botInfo = Invoke-RestMethod `

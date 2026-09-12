@@ -10,25 +10,9 @@ Set-StrictMode -Version Latest
 
 $ExpectedBranch = "main"
 $ExpectedOrigin = "https://github.com/Duwivok/shumxmesto.git"
-$SshTarget = "zvezda-server"
-$RemoteRepository = "/srv/shumxmesto"
-$PublicHealthUrl = "http://186.246.18.24/"
+$PagesUrl = "https://duwivok.github.io/shumxmesto/"
 $RepositoryPath = $PSScriptRoot.Replace('\', '/')
 $GitBaseArguments = @("-c", "safe.directory=$RepositoryPath")
-
-function Invoke-NativeCommand {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath,
-
-        [string[]]$ArgumentList = @()
-    )
-
-    & $FilePath @ArgumentList
-    if ($LASTEXITCODE -ne 0) {
-        throw "$FilePath exited with code $LASTEXITCODE."
-    }
-}
 
 function Invoke-GitCommand {
     param(
@@ -134,50 +118,13 @@ try {
     }
 
     Invoke-GitCommand -ArgumentList @("push", "origin", $ExpectedBranch)
-    $expectedCommit = (& git @GitBaseArguments rev-parse HEAD).Trim()
+    $pushedCommit = (& git @GitBaseArguments rev-parse HEAD).Trim()
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to determine the pushed commit SHA."
     }
 
-    $remoteScript = @'
-set -eu
-cd /srv/shumxmesto
-test -d .git
-test "$(git branch --show-current)" = main
-if test -n "$(git status --porcelain)"; then
-  printf '%s\n' 'The server repository has local changes; pull was cancelled.' >&2
-  exit 80
-fi
-git pull --ff-only origin main
-actual_commit=$(git rev-parse HEAD)
-if test "$actual_commit" != "__EXPECTED_COMMIT__"; then
-  printf '%s\n' 'The server SHA does not match the pushed commit.' >&2
-  exit 81
-fi
-nginx -t
-status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' -H 'Host: 186.246.18.24' http://127.0.0.1/)
-if test "$status" != 200; then
-  printf 'The server health check returned HTTP %s.\n' "$status" >&2
-  exit 82
-fi
-printf 'server_commit=%s\nserver_http=%s\n' "$actual_commit" "$status"
-'@
-    $remoteScript = $remoteScript.Replace("__EXPECTED_COMMIT__", $expectedCommit)
-    $encodedRemoteScript = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($remoteScript))
-
-    Invoke-NativeCommand -FilePath "ssh" -ArgumentList @(
-        "-o", "BatchMode=yes",
-        "-o", "StrictHostKeyChecking=yes",
-        $SshTarget,
-        "echo $encodedRemoteScript | base64 -d | bash"
-    )
-
-    $response = Invoke-WebRequest -Uri $PublicHealthUrl -Method Head -UseBasicParsing
-    if ([int]$response.StatusCode -ne 200) {
-        throw "The external site check returned HTTP $($response.StatusCode)."
-    }
-
-    Write-Host "Deployment completed: $expectedCommit, HTTP 200"
+    Write-Host "GitHub push completed: $pushedCommit"
+    Write-Host "GitHub Pages will deploy site/ automatically: $PagesUrl"
 }
 finally {
     Pop-Location
