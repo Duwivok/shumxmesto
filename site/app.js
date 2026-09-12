@@ -6,13 +6,42 @@ const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
 const navigationButtons = [...document.querySelectorAll("[data-target]")];
 const cigaretteButton = document.querySelector("[data-cigarette]");
+const cigaretteImage = document.querySelector("[data-cigarette-image]");
 const cigaretteVideo = document.querySelector("[data-cigarette-video]");
 const countdownTimer = initCountdownTimer(document.querySelector("[data-countdown]"));
 let cigarettePlaybackId = 0;
+let cigaretteResetTimer = 0;
+
+const CIGARETTE_ANIMATION_DURATION = 4000;
+
+function isAppleMobileDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+const cigaretteAnimationFormat = isAppleMobileDevice() ? "image" : "video";
+cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
+
+if (cigaretteAnimationFormat === "image") {
+  const preload = document.createElement("link");
+  preload.rel = "preload";
+  preload.as = "image";
+  preload.type = "image/webp";
+  preload.href = cigaretteImage.dataset.src;
+  document.head.append(preload);
+} else {
+  cigaretteVideo.src = cigaretteVideo.dataset.src;
+  cigaretteVideo.preload = "auto";
+  cigaretteVideo.load();
+}
 
 function resetCigaretteAnimation() {
   cigarettePlaybackId += 1;
+  window.clearTimeout(cigaretteResetTimer);
   cigaretteVideo.pause();
+  cigaretteImage.onload = null;
+  cigaretteImage.onerror = null;
+  cigaretteImage.removeAttribute("src");
 
   try {
     cigaretteVideo.currentTime = 0;
@@ -25,6 +54,34 @@ function resetCigaretteAnimation() {
 
 function restartCigaretteAnimation() {
   const playbackId = ++cigarettePlaybackId;
+
+  window.clearTimeout(cigaretteResetTimer);
+
+  if (cigaretteAnimationFormat === "image") {
+    cigaretteVideo.pause();
+    cigaretteButton.classList.remove("is-playing");
+    cigaretteImage.onload = null;
+    cigaretteImage.onerror = null;
+    cigaretteImage.removeAttribute("src");
+    cigaretteImage.onload = () => {
+      if (playbackId !== cigarettePlaybackId) {
+        return;
+      }
+
+      cigaretteButton.classList.add("is-playing");
+      cigaretteResetTimer = window.setTimeout(
+        resetCigaretteAnimation,
+        CIGARETTE_ANIMATION_DURATION,
+      );
+    };
+    cigaretteImage.onerror = () => {
+      if (playbackId === cigarettePlaybackId) {
+        resetCigaretteAnimation();
+      }
+    };
+    cigaretteImage.src = `${cigaretteImage.dataset.src}#play-${playbackId}`;
+    return;
+  }
 
   cigaretteVideo.pause();
 

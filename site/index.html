@@ -12,7 +12,6 @@
     <link rel="preload" as="image" href="backgrounds/rsvp.png" />
     <link rel="preload" as="image" href="navigation/nav.png" />
     <link rel="preload" as="image" href="video-poster.png" />
-    <link rel="preload" as="video" href="1%20(3)%20(2).webm" type="video/webm" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -86,11 +85,18 @@
               alt=""
               draggable="false"
             />
+            <img
+              class="rsvp-cigarette-animation"
+              data-cigarette-image
+              data-src="cigarette-animation.webp"
+              alt=""
+              draggable="false"
+            />
             <video
               class="rsvp-cigarette-video"
               data-cigarette-video
-              src="1%20(3)%20(2).webm"
-              preload="auto"
+              data-src="1%20(3)%20(2).webm"
+              preload="none"
               muted
               playsinline
               webkit-playsinline

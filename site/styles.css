@@ -266,6 +266,7 @@ button {
 }
 
 .rsvp-cigarette-poster,
+.rsvp-cigarette-animation,
 .rsvp-cigarette-video {
   position: absolute;
   inset: 0;
@@ -281,15 +282,18 @@ button {
   opacity: 1;
 }
 
+.rsvp-cigarette-animation,
 .rsvp-cigarette-video {
   opacity: 0;
 }
 
-.rsvp-cigarette.is-playing .rsvp-cigarette-poster {
+.rsvp-cigarette[data-animation-format="image"].is-playing .rsvp-cigarette-poster,
+.rsvp-cigarette[data-animation-format="video"].is-playing .rsvp-cigarette-poster {
   opacity: 0;
 }
 
-.rsvp-cigarette.is-playing .rsvp-cigarette-video {
+.rsvp-cigarette[data-animation-format="image"].is-playing .rsvp-cigarette-animation,
+.rsvp-cigarette[data-animation-format="video"].is-playing .rsvp-cigarette-video {
   opacity: 1;
 }
 
