@@ -1,6 +1,5 @@
 import {
   loadDigitAsset,
-  playVideo,
   preloadDigitAssets,
 } from "./assets-loader.js";
 import { PerspectiveLayout } from "./perspective.js";
@@ -46,8 +45,6 @@ class CountdownTimer {
     this.active = false;
     this.timeout = 0;
     this.screens = new Map();
-    this.videos = [...root.querySelectorAll("video")];
-
     if (Number.isNaN(this.target.getTime())) {
       throw new Error(`Некорректная дата таймера: ${config.targetLocalDateTime}`);
     }
@@ -58,7 +55,7 @@ class CountdownTimer {
       this.screens.set(name, {
         element,
         value: "",
-        digitVideos: [...element.querySelectorAll("[data-timer-digit]")],
+        digitImages: [...element.querySelectorAll("[data-timer-digit]")],
       });
     });
 
@@ -83,19 +80,18 @@ class CountdownTimer {
         return;
       }
 
-      const video = screen.digitVideos[position];
-      const revision = Number(video.dataset.revision || 0) + 1;
-      video.dataset.revision = String(revision);
+      const image = screen.digitImages[position];
+      const revision = Number(image.dataset.revision || 0) + 1;
+      image.dataset.revision = String(revision);
 
-      loadDigitAsset(video, Number(character))
+      loadDigitAsset(image, Number(character))
         .then(() => {
-          if (Number(video.dataset.revision) !== revision) {
+          if (Number(image.dataset.revision) !== revision) {
             return;
           }
 
-          this.syncVideo(video);
-          const digitsReady = screen.digitVideos.every(
-            (digitVideo) => digitVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA,
+          const digitsReady = screen.digitImages.every(
+            (digitImage) => digitImage.complete && digitImage.naturalWidth > 0,
           );
 
           if (digitsReady) {
@@ -145,24 +141,14 @@ class CountdownTimer {
     }, delay);
   }
 
-  syncVideo(video) {
-    if (this.active && !document.hidden) {
-      playVideo(video);
-    } else {
-      video.pause();
-    }
-  }
-
   syncVisibility() {
     if (this.active && !document.hidden) {
       this.updateCountdown();
-      this.videos.forEach(playVideo);
       this.scheduleUpdate();
       return;
     }
 
     window.clearTimeout(this.timeout);
-    this.videos.forEach((video) => video.pause());
   }
 
   setActive(active) {
@@ -181,7 +167,6 @@ class CountdownTimer {
     window.clearTimeout(this.timeout);
     document.removeEventListener("visibilitychange", this.handleVisibilityChange);
     this.perspective.destroy();
-    this.videos.forEach((video) => video.pause());
   }
 }
 

@@ -195,13 +195,23 @@ button {
   overflow: hidden;
 }
 
-.timer-digit video {
+.timer-digit:first-child {
+  transform: translateX(16.6667%);
+}
+
+.timer-digit:last-child {
+  transform: translateX(-16.6667%);
+}
+
+.timer-digit [data-timer-digit] {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
   mix-blend-mode: screen;
   filter: saturate(1.08) contrast(1.08) brightness(1.03);
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .timer-label-slot {

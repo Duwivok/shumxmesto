@@ -1,61 +1,54 @@
 const DIGIT_ASSET_URLS = Object.freeze(
   Array.from({ length: 10 }, (_, digit) =>
-    new URL(`digits/${String(digit + 1).padStart(3, "0")}.webm`, import.meta.url).href,
+    new URL(`digits/${String(digit + 1).padStart(3, "0")}.webp`, import.meta.url).href,
   ),
 );
 
 const preloadRequests = new Map();
 
-function prepareVideo(video) {
-  video.muted = true;
-  video.defaultMuted = true;
-  video.loop = true;
-  video.preload = "auto";
-  video.playsInline = true;
-  video.disablePictureInPicture = true;
-  video.controls = false;
-  video.tabIndex = -1;
-  video.setAttribute("playsinline", "");
-  video.setAttribute("webkit-playsinline", "");
-  video.setAttribute("aria-hidden", "true");
+function prepareImage(image) {
+  image.alt = "";
+  image.decoding = "async";
+  image.draggable = false;
+  image.setAttribute("aria-hidden", "true");
 }
 
-function waitForCurrentFrame(video) {
-  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-    return Promise.resolve(video);
+function waitForImage(image) {
+  if (image.complete) {
+    return image.naturalWidth > 0
+      ? Promise.resolve(image)
+      : Promise.reject(new Error(`Не удалось загрузить изображение: ${image.src}`));
   }
 
   return new Promise((resolve, reject) => {
     const cleanup = () => {
-      video.removeEventListener("loadeddata", handleLoadedData);
-      video.removeEventListener("error", handleError);
+      image.removeEventListener("load", handleLoad);
+      image.removeEventListener("error", handleError);
     };
-    const handleLoadedData = () => {
+    const handleLoad = () => {
       cleanup();
-      resolve(video);
+      resolve(image);
     };
     const handleError = () => {
       cleanup();
-      reject(new Error(`Не удалось загрузить видео-ассет: ${video.currentSrc || video.src}`));
+      reject(new Error(`Не удалось загрузить изображение: ${image.src}`));
     };
 
-    video.addEventListener("loadeddata", handleLoadedData, { once: true });
-    video.addEventListener("error", handleError, { once: true });
+    image.addEventListener("load", handleLoad, { once: true });
+    image.addEventListener("error", handleError, { once: true });
   });
 }
 
-function loadVideoSource(video, source) {
-  prepareVideo(video);
+function loadImageSource(image, source) {
+  prepareImage(image);
 
-  if (video.dataset.assetSource === source) {
-    return waitForCurrentFrame(video);
+  if (image.dataset.assetSource === source) {
+    return waitForImage(image);
   }
 
-  video.dataset.assetSource = source;
-  video.src = source;
-  video.load();
-
-  return waitForCurrentFrame(video);
+  image.dataset.assetSource = source;
+  image.src = source;
+  return waitForImage(image);
 }
 
 export function digitAssetUrl(digit) {
@@ -66,41 +59,23 @@ export function digitAssetUrl(digit) {
   return DIGIT_ASSET_URLS[digit];
 }
 
-export function loadDigitAsset(video, digit) {
-  return loadVideoSource(video, digitAssetUrl(digit));
+export function loadDigitAsset(image, digit) {
+  return loadImageSource(image, digitAssetUrl(digit));
 }
 
-function preloadVideoAsset(source) {
+function preloadImageAsset(source) {
   if (preloadRequests.has(source)) {
     return preloadRequests.get(source);
   }
 
-  const video = document.createElement("video");
-  prepareVideo(video);
-  video.src = source;
-  video.load();
-
-  const request = waitForCurrentFrame(video).finally(() => {
-    video.removeAttribute("src");
-    video.load();
-  });
-
+  const image = new Image();
+  prepareImage(image);
+  image.src = source;
+  const request = waitForImage(image);
   preloadRequests.set(source, request);
   return request;
 }
 
 export function preloadDigitAssets() {
-  return Promise.allSettled(DIGIT_ASSET_URLS.map(preloadVideoAsset));
-}
-
-export function playVideo(video) {
-  if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-    return;
-  }
-
-  const request = video.play();
-  request?.catch(() => {
-    // Muted inline video normally autoplays. A later user gesture/page activation
-    // retries playback through the timer controller if the WebView blocks it.
-  });
+  return Promise.allSettled(DIGIT_ASSET_URLS.map(preloadImageAsset));
 }
