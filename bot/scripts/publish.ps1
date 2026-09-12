@@ -1,20 +1,22 @@
 $BOT_TOKEN = $env:TELEGRAM_BOT_TOKEN
+$MINIAPP_URL = $env:MINIAPP_URL
 
 if ([string]::IsNullOrWhiteSpace($BOT_TOKEN)) {
     throw "TELEGRAM_BOT_TOKEN environment variable is not set. Set it before running this script."
 }
 
-$BOT_USERNAME = "sdfoihnsdipfbisdfbBot"
-$CHANNEL = "@kdsjbfsbdjkfbksjbdfjkb"
-
-$APP_LINK = "https://t.me/${BOT_USERNAME}?startapp=post_001"
+if ([string]::IsNullOrWhiteSpace($MINIAPP_URL)) {
+    throw "MINIAPP_URL environment variable is not set. Set it before running this script."
+}
 
 Write-Host "Mini App link:"
-Write-Host $APP_LINK
+Write-Host $MINIAPP_URL
+
+$CHANNEL = "@kdsjbfsbdjkfbksjbdfjkb"
 
 $templatePath = Join-Path `
     -Path $PSScriptRoot `
-    -ChildPath "..\templates\post.html"
+    -ChildPath "../templates/post.html"
 
 $richHtml = Get-Content `
     -LiteralPath $templatePath `
@@ -23,7 +25,7 @@ $richHtml = Get-Content `
 
 $richHtml = $richHtml.Replace(
     "__APP_LINK__",
-    $APP_LINK
+    $MINIAPP_URL
 )
 
 $bodyObject = @{
