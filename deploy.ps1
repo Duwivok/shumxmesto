@@ -13,6 +13,8 @@ $ExpectedOrigin = "https://github.com/Duwivok/shumxmesto.git"
 $SshTarget = "zvezda-server"
 $RemoteRepository = "/srv/shumxmesto"
 $PublicHealthUrl = "http://186.246.18.24/"
+$RepositoryPath = $PSScriptRoot.Replace('\', '/')
+$GitBaseArguments = @("-c", "safe.directory=$RepositoryPath")
 
 function Invoke-NativeCommand {
     param(
@@ -28,24 +30,35 @@ function Invoke-NativeCommand {
     }
 }
 
+function Invoke-GitCommand {
+    param(
+        [string[]]$ArgumentList = @()
+    )
+
+    & git @GitBaseArguments @ArgumentList
+    if ($LASTEXITCODE -ne 0) {
+        throw "git exited with code $LASTEXITCODE."
+    }
+}
+
 Push-Location $PSScriptRoot
 
 try {
-    Invoke-NativeCommand -FilePath "git" -ArgumentList @("rev-parse", "--is-inside-work-tree")
+    Invoke-GitCommand -ArgumentList @("rev-parse", "--is-inside-work-tree")
 
-    $branch = (& git branch --show-current).Trim()
+    $branch = (& git @GitBaseArguments branch --show-current).Trim()
     if ($LASTEXITCODE -ne 0 -or $branch -ne $ExpectedBranch) {
         throw "Deployment is allowed only from $ExpectedBranch. Current branch: $branch"
     }
 
-    $origin = (& git remote get-url origin).Trim()
+    $origin = (& git @GitBaseArguments remote get-url origin).Trim()
     if ($LASTEXITCODE -ne 0 -or $origin -ne $ExpectedOrigin) {
         throw "Unexpected origin: $origin"
     }
 
-    Invoke-NativeCommand -FilePath "git" -ArgumentList @("fetch", "origin", $ExpectedBranch)
+    Invoke-GitCommand -ArgumentList @("fetch", "origin", $ExpectedBranch)
 
-    & git merge-base --is-ancestor "origin/$ExpectedBranch" HEAD
+    & git @GitBaseArguments merge-base --is-ancestor "origin/$ExpectedBranch" HEAD
     $ancestorExitCode = $LASTEXITCODE
     if ($ancestorExitCode -eq 1) {
         throw "origin/main contains changes missing locally. Synchronize the branch first."
@@ -76,11 +89,11 @@ try {
         }
     }
 
-    Invoke-NativeCommand -FilePath "git" -ArgumentList @("diff", "--check")
-    Invoke-NativeCommand -FilePath "git" -ArgumentList @("add", "--all")
-    Invoke-NativeCommand -FilePath "git" -ArgumentList @("diff", "--cached", "--check")
+    Invoke-GitCommand -ArgumentList @("diff", "--check")
+    Invoke-GitCommand -ArgumentList @("add", "--all")
+    Invoke-GitCommand -ArgumentList @("diff", "--cached", "--check")
 
-    $stagedFiles = @(& git diff --cached --name-only --diff-filter=ACMRTUXB)
+    $stagedFiles = @(& git @GitBaseArguments diff --cached --name-only --diff-filter=ACMRTUXB)
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to read the staged file list."
     }
@@ -105,7 +118,7 @@ try {
             ('(AKIA' + '|ASIA)[A-Z0-9]{16}')
         ) -join '|'
 
-        & git grep --cached -I -q -E -e $secretPatterns -- . ':(exclude).env.example'
+        & git @GitBaseArguments grep --cached -I -q -E -e $secretPatterns -- . ':(exclude).env.example'
         $secretScanExitCode = $LASTEXITCODE
         if ($secretScanExitCode -eq 0) {
             throw "Deployment stopped: a possible secret was found in staged content."
@@ -114,14 +127,14 @@ try {
             throw "Unable to scan staged content for secrets."
         }
 
-        Invoke-NativeCommand -FilePath "git" -ArgumentList @("commit", "-m", $Message)
+        Invoke-GitCommand -ArgumentList @("commit", "-m", $Message)
     }
     else {
         Write-Host "No new changes to commit; continuing with the current HEAD."
     }
 
-    Invoke-NativeCommand -FilePath "git" -ArgumentList @("push", "origin", $ExpectedBranch)
-    $expectedCommit = (& git rev-parse HEAD).Trim()
+    Invoke-GitCommand -ArgumentList @("push", "origin", $ExpectedBranch)
+    $expectedCommit = (& git @GitBaseArguments rev-parse HEAD).Trim()
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to determine the pushed commit SHA."
     }
