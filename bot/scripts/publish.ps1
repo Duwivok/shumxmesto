@@ -9,8 +9,18 @@ if ([string]::IsNullOrWhiteSpace($MINIAPP_URL)) {
     throw "MINIAPP_URL environment variable is not set. Set it before running this script."
 }
 
-Write-Host "Mini App link:"
-Write-Host $MINIAPP_URL
+$botInfo = Invoke-RestMethod `
+    -Method Get `
+    -Uri "https://api.telegram.org/bot$BOT_TOKEN/getMe"
+
+if (-not $botInfo.ok -or [string]::IsNullOrWhiteSpace($botInfo.result.username)) {
+    throw "Unable to determine the Telegram bot username."
+}
+
+$APP_LINK = "https://t.me/$($botInfo.result.username)?startapp=home"
+
+Write-Host "Mini App launch link:"
+Write-Host $APP_LINK
 
 $CHANNEL = "@kdsjbfsbdjkfbksjbdfjkb"
 
@@ -25,7 +35,7 @@ $richHtml = Get-Content `
 
 $richHtml = $richHtml.Replace(
     "__APP_LINK__",
-    $MINIAPP_URL
+    $APP_LINK
 )
 
 $bodyObject = @{
