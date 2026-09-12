@@ -36,21 +36,11 @@ if (cigaretteAnimationFormat === "image") {
   cigaretteVideo.load();
 }
 
-function resetCigaretteAnimation() {
-  cigarettePlaybackId += 1;
+function finishCigaretteAnimation() {
   window.clearTimeout(cigaretteResetTimer);
-  cigaretteVideo.pause();
   cigaretteImage.onload = null;
   cigaretteImage.onerror = null;
-  cigaretteImage.removeAttribute("src");
-
-  try {
-    cigaretteVideo.currentTime = 0;
-  } catch (error) {
-    console.debug("Cigarette video is not ready to seek yet", error);
-  }
-
-  cigaretteButton.classList.remove("is-playing");
+  cigaretteButton.classList.add("is-playing");
 }
 
 function restartCigaretteAnimation() {
@@ -71,13 +61,13 @@ function restartCigaretteAnimation() {
 
       cigaretteButton.classList.add("is-playing");
       cigaretteResetTimer = window.setTimeout(
-        resetCigaretteAnimation,
+        finishCigaretteAnimation,
         CIGARETTE_ANIMATION_DURATION,
       );
     };
     cigaretteImage.onerror = () => {
       if (playbackId === cigarettePlaybackId) {
-        resetCigaretteAnimation();
+        cigaretteButton.classList.remove("is-playing");
       }
     };
     cigaretteImage.src = `${cigaretteImage.dataset.src}#play-${playbackId}`;
@@ -114,10 +104,6 @@ function pageFromHash() {
 
 function showPage(page, { updateUrl = true } = {}) {
   const nextPage = PAGES.has(page) ? page : "home";
-
-  if (nextPage !== "rsvp") {
-    resetCigaretteAnimation();
-  }
 
   app.dataset.page = nextPage;
   countdownTimer?.setActive(nextPage === "home");
@@ -165,7 +151,7 @@ navigationButtons.forEach((button) => {
 });
 
 cigaretteButton.addEventListener("click", restartCigaretteAnimation);
-cigaretteVideo.addEventListener("ended", resetCigaretteAnimation);
+cigaretteVideo.addEventListener("ended", finishCigaretteAnimation);
 
 window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: false }));
 
