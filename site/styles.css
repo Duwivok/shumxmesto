@@ -213,7 +213,13 @@ button {
 }
 
 .timer-glow-layer.is-ready {
-  opacity: 0.32;
+  opacity: 0.22;
+}
+
+.timer-system[data-effects="on"] .timer-glow-layer {
+  /* Spread the original pulse into the v6 screen masks below the background,
+     digits and glass, without starting another animation clock. */
+  filter: url(#timer-screen-spill);
 }
 
 .timer-system[data-effects="off"] .timer-screen-backgrounds,

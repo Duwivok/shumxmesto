@@ -1,4 +1,4 @@
-import { initCountdownTimer } from "./timer.js?v=20260913glass6";
+import { initCountdownTimer } from "./timer.js?v=20260914spill1";
 import { initTimerScreenBackground } from "./timer-background.js?v=20260913background1";
 
 const PAGES = new Set(["home", "lineup", "bar", "rsvp"]);

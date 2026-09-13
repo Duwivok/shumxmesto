@@ -17,7 +17,7 @@
     <link rel="preload" as="image" href="video-poster.png" />
     <link rel="preload" as="image" href="cigarette-idle-intro.webp?v=688799a7" />
     <link rel="preload" as="image" href="cigarette-idle-preview.webp?v=7203645e" />
-    <link rel="stylesheet" href="styles.css?v=20260913background1" />
+    <link rel="stylesheet" href="styles.css?v=20260914spill1" />
   </head>
   <body>
     <main class="app" data-app data-page="home" data-ready="false">
@@ -47,6 +47,21 @@
           ></video>
           <svg class="timer-filter-definitions" aria-hidden="true" width="0" height="0" focusable="false">
             <defs>
+              <filter id="timer-screen-spill" filterUnits="userSpaceOnUse" x="0" y="0" width="390" height="240" color-interpolation-filters="sRGB">
+                <!-- Both reflections come from the same live video/WebP frame. -->
+                <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="diffuse" />
+                <feComponentTransfer in="diffuse" result="interior-light">
+                  <feFuncA type="linear" slope="2.4" />
+                </feComponentTransfer>
+                <feImage data-timer-glow-mask x="0" y="0" width="390" height="240" preserveAspectRatio="none" result="screen-mask" />
+                <!-- Leave a small inner margin for antialiasing at narrow sizes. -->
+                <feMorphology in="screen-mask" operator="erode" radius="1" result="inset-mask" />
+                <feComposite in="interior-light" in2="inset-mask" operator="in" result="screen-light" />
+                <feMerge>
+                  <feMergeNode in="SourceGraphic" />
+                  <feMergeNode in="screen-light" />
+                </feMerge>
+              </filter>
               <filter id="timer-digit-light" x="-30%" y="-40%" width="160%" height="180%" color-interpolation-filters="sRGB">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
                 <feComponentTransfer in="blur" result="light">
@@ -192,6 +207,6 @@
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260913background1"></script>
+    <script type="module" src="app.js?v=20260914spill1"></script>
   </body>
 </html>

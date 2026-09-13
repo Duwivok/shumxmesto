@@ -158,7 +158,7 @@ export class PerspectiveLayout {
     this.designSize = layout.stage;
     // The existing halo movie was drawn around the previous monitor layout.
     // Its registration is retained in v6; this transform applies only to
-    // those exterior reflections, never to the already projected glass PNGs.
+    // the shared light source, never to the already projected glass PNGs.
     this.glowRegistration = layout.screens.find((screen) => screen.unit === "minutes")
       ?.reconstruction?.matrix_row_vector;
 
@@ -185,8 +185,32 @@ export class PerspectiveLayout {
       });
       this.screens.set(name, { element, surfaces, quad: geometry.corners });
     });
+    this.updateGlowMask();
     this.refresh(true);
     this.timerRoot.dataset.layoutReady = "true";
+  }
+
+  updateGlowMask() {
+    const mask = this.timerRoot.querySelector("[data-timer-glow-mask]");
+    if (!mask || !this.glowRegistration) {
+      return;
+    }
+
+    // Express the actual v6 screen contours in the glow movie's local frame.
+    // Its existing registration then brings the mask back to the exact same
+    // scene corners as the digits and glass, including after a resize.
+    const [[a, b], [c, d], [e, f]] = this.glowRegistration;
+    const determinant = a * d - b * c;
+    const polygons = [...this.screens.values()].map(({ quad }) => {
+      const points = quad.map(([x, y]) => {
+        const localX = (d * (x - e) - c * (y - f)) / determinant;
+        const localY = (a * (y - f) - b * (x - e)) / determinant - 419.5;
+        return `${localX.toFixed(6)},${localY.toFixed(6)}`;
+      });
+      return `<polygon points="${points.join(" ")}" fill="white"/>`;
+    });
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="390" height="240" viewBox="0 0 390 240">${polygons.join("")}</svg>`;
+    mask.setAttribute("href", `data:image/svg+xml,${encodeURIComponent(svg)}`);
   }
 
   requestRefresh() {
