@@ -148,13 +148,30 @@ button {
   position: absolute;
   z-index: 1;
   /* The former 84% × 84% area is reduced by 20% in the monitor's
-     local plane. Keep the lower part clear for the future unit label. */
+     local plane. Keep the lower part clear for the unit label. */
   top: 4%;
   left: 16.4%;
   width: 67.2%;
   height: 67.2%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.timer-word {
+  position: absolute;
+  z-index: 1;
+  top: 61%;
+  left: 50%;
+  display: block;
+  width: auto;
+  height: 34%;
+  /* All word SVGs share the same vertical viewport and baseline. Their
+     natural widths preserve the letter scale as the grammatical form changes.
+     This translation is inside the digits' existing projective surface. */
+  transform: translateX(-50%);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .timer-system[data-effects="on"] .timer-digits {

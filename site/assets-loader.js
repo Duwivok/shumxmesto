@@ -39,7 +39,7 @@ function waitForImage(image) {
   });
 }
 
-function loadImageSource(image, source) {
+export function loadImageAsset(image, source) {
   prepareImage(image);
 
   if (image.dataset.assetSource === source) {
@@ -60,10 +60,10 @@ export function digitAssetUrl(digit) {
 }
 
 export function loadDigitAsset(image, digit) {
-  return loadImageSource(image, digitAssetUrl(digit));
+  return loadImageAsset(image, digitAssetUrl(digit));
 }
 
-function preloadImageAsset(source) {
+export function preloadImageAsset(source) {
   if (preloadRequests.has(source)) {
     return preloadRequests.get(source);
   }

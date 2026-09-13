@@ -1,8 +1,10 @@
 import {
   loadDigitAsset,
+  loadImageAsset,
   preloadDigitAssets,
-} from "./assets-loader.js?v=20260913c";
+} from "./assets-loader.js?v=20260914words1";
 import { PerspectiveLayout } from "./perspective.js?v=20260914spill1";
+import { timerWord, preloadWordAssets } from "./timer-words.js?v=20260914words1";
 
 export const COUNTDOWN_CONFIG = Object.freeze({
   // No timezone suffix means device-local time. Change this one value when the
@@ -30,6 +32,12 @@ function twoDigits(value) {
   return String(value).padStart(2, "0");
 }
 
+async function decodedImage(request) {
+  const image = await request;
+  await image.decode?.();
+  return image;
+}
+
 function runWhenIdle(callback) {
   if ("requestIdleCallback" in window) {
     window.requestIdleCallback(callback, { timeout: 2000 });
@@ -43,6 +51,7 @@ class CountdownTimer {
     this.root = root;
     this.target = new Date(config.targetLocalDateTime);
     this.active = false;
+    this.destroyed = false;
     this.timeout = 0;
     this.screens = new Map();
     if (Number.isNaN(this.target.getTime())) {
@@ -55,7 +64,11 @@ class CountdownTimer {
       this.screens.set(name, {
         element,
         value: "",
+        requestedValue: null,
+        revision: 0,
         digitImages: [...element.querySelectorAll("[data-timer-digit]")],
+        wordImage: element.querySelector("[data-timer-word]"),
+        word: null,
       });
     });
 
@@ -64,45 +77,78 @@ class CountdownTimer {
     document.addEventListener("visibilitychange", this.handleVisibilityChange);
 
     this.updateCountdown();
-    runWhenIdle(() => preloadDigitAssets());
+    runWhenIdle(() => {
+      preloadDigitAssets();
+      preloadWordAssets();
+    });
   }
 
   updateScreen(name, value) {
     const screen = this.screens.get(name);
     const nextValue = twoDigits(value);
 
-    if (!screen || screen.value === nextValue) {
-      return;
+    if (!screen || screen.requestedValue === nextValue) {
+      return screen?.pending;
     }
 
-    [...nextValue].forEach((character, position) => {
+    screen.requestedValue = nextValue;
+    const revision = ++screen.revision;
+    const word = timerWord(name, value);
+    // Decode replacements off the page. Publish the number and its word in
+    // one DOM update so slow downloads cannot leave mismatched declensions.
+    const digitRequests = [...nextValue].map((character, position) => {
       if (screen.value[position] === character) {
-        return;
+        return null;
       }
 
-      const image = screen.digitImages[position];
-      const revision = Number(image.dataset.revision || 0) + 1;
-      image.dataset.revision = String(revision);
-
-      loadDigitAsset(image, Number(character))
-        .then(() => {
-          if (Number(image.dataset.revision) !== revision) {
-            return;
-          }
-
-          const digitsReady = screen.digitImages.every(
-            (digitImage) => digitImage.complete && digitImage.naturalWidth > 0,
-          );
-
-          if (digitsReady) {
-            screen.element.classList.add("is-ready");
-          }
-        })
-        .catch((error) => console.error(error));
+      const image = new Image();
+      image.dataset.timerDigit = "";
+      return decodedImage(loadDigitAsset(image, Number(character)));
     });
 
-    screen.value = nextValue;
-    screen.element.setAttribute("aria-label", `${name.toUpperCase()}: ${nextValue}`);
+    let wordRequest = null;
+    if (screen.word?.source !== word.source) {
+      const image = new Image();
+      image.className = "timer-word";
+      image.dataset.timerWord = "";
+      wordRequest = decodedImage(loadImageAsset(image, word.source));
+    }
+
+    screen.pending = Promise.all([...digitRequests, wordRequest])
+      .then(([firstDigit, secondDigit, wordImage]) => {
+        if (this.destroyed || screen.revision !== revision) {
+          return;
+        }
+
+        [firstDigit, secondDigit].forEach((image, position) => {
+          if (image) {
+            screen.digitImages[position].replaceWith(image);
+            screen.digitImages[position] = image;
+          }
+        });
+        if (wordImage) {
+          screen.wordImage.replaceWith(wordImage);
+          screen.wordImage = wordImage;
+        }
+        screen.value = nextValue;
+        screen.word = word;
+        screen.element.setAttribute("aria-label", `${nextValue} ${word.text}`);
+        screen.element.classList.add("is-ready");
+        const labels = [...this.screens.values()]
+          .filter((item) => item.word)
+          .map((item) => `${item.value} ${item.word.text}`);
+        this.root.setAttribute("aria-label", `До события: ${labels.join(", ")}`);
+      })
+      .catch((error) => {
+        if (this.destroyed || screen.revision !== revision) {
+          return;
+        }
+        // Keep the last complete number/word pair and allow the next update
+        // to retry, instead of flashing an empty or partly loaded screen.
+        screen.requestedValue = null;
+        console.error(error);
+      });
+    return screen.pending;
   }
 
   updateCountdown() {
@@ -111,10 +157,6 @@ class CountdownTimer {
     this.updateScreen("hours", values.hours);
     this.updateScreen("minutes", values.minutes);
     this.root.dataset.expired = String(values.expired);
-    this.root.setAttribute(
-      "aria-label",
-      `До события: ${twoDigits(values.days)} дней, ${twoDigits(values.hours)} часов, ${twoDigits(values.minutes)} минут`,
-    );
 
     return values;
   }
@@ -164,6 +206,7 @@ class CountdownTimer {
   }
 
   destroy() {
+    this.destroyed = true;
     window.clearTimeout(this.timeout);
     document.removeEventListener("visibilitychange", this.handleVisibilityChange);
     this.perspective.destroy();
