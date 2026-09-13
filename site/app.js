@@ -1,4 +1,5 @@
-import { initCountdownTimer } from "./timer.js?v=20260913c";
+import { initCountdownTimer } from "./timer.js?v=20260913glass6";
+import { initTimerScreenBackground } from "./timer-background.js?v=20260913background1";
 
 const PAGES = new Set(["home", "lineup", "bar", "rsvp"]);
 
@@ -15,6 +16,7 @@ const cigaretteIdleImage = document.querySelector("[data-cigarette-idle]");
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
 const cigaretteVideo = document.querySelector("[data-cigarette-video]");
 const countdownTimer = initCountdownTimer(document.querySelector("[data-countdown]"));
+const timerScreenBackground = initTimerScreenBackground(document.querySelector("[data-timer-background-video]"));
 let cigarettePlaybackId = 0;
 let cigaretteResetTimer = 0;
 let cigaretteIdleLoopTimer = 0;
@@ -185,6 +187,8 @@ function showPage(page, { updateUrl = true } = {}) {
 
   app.dataset.page = nextPage;
   countdownTimer?.setActive(nextPage === "home");
+  timerScreenBackground?.setActive(nextPage === "home");
+  syncTimerGlowPlayback();
 
   if (nextPage === "rsvp") {
     startCigaretteIdle();
@@ -254,11 +258,27 @@ function showTimerGlowVideo() {
   timerGlowVideo.src = timerGlowVideo.dataset.src;
   timerGlowVideo.preload = "auto";
   timerGlowVideo.load();
+  syncTimerGlowPlayback();
+}
+
+function syncTimerGlowPlayback() {
+  if (!timerGlowVideo || timerGlow?.dataset.animationFormat !== "video") {
+    return;
+  }
+
+  if (app.dataset.page !== "home" || document.hidden) {
+    timerGlowVideo.pause();
+    return;
+  }
 
   const playRequest = timerGlowVideo.play();
 
   if (playRequest) {
     playRequest.catch((error) => {
+      // Leaving the home page while play() is pending is an expected pause.
+      if (error.name === "AbortError" || app.dataset.page !== "home" || document.hidden) {
+        return;
+      }
       console.warn("Could not autoplay the timer glow video; using image fallback", error);
       showTimerGlowImage();
     });
@@ -316,6 +336,7 @@ cigaretteButton.addEventListener("click", restartCigaretteAnimation);
 cigaretteVideo.addEventListener("ended", finishCigaretteAnimation);
 
 window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: false }));
+document.addEventListener("visibilitychange", syncTimerGlowPlayback);
 
 initTimerGlow();
 showPage(pageFromHash(), { updateUrl: false });

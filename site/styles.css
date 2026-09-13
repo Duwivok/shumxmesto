@@ -87,6 +87,10 @@ button {
   pointer-events: none;
 }
 
+.timer-system:not([data-layout-ready="true"]) {
+  visibility: hidden;
+}
+
 .app:not([data-page="home"]) .timer-system {
   visibility: hidden;
   opacity: 0;
@@ -97,17 +101,22 @@ button {
   overflow: visible;
 }
 
-.timer-screen-base,
 .timer-screen-clip {
   position: absolute;
   inset: 0;
 }
 
-.timer-screen-base {
-  z-index: 0;
-  opacity: 0;
-  background: #050006;
-  transition: opacity 120ms linear;
+.timer-screen-backgrounds {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 1;
+  mix-blend-mode: normal;
+  pointer-events: none;
 }
 
 .timer-surface {
@@ -115,9 +124,7 @@ button {
   top: 0;
   left: 0;
   transform-origin: 0 0;
-  transform-style: preserve-3d;
   backface-visibility: hidden;
-  will-change: transform;
 }
 
 .timer-screen-clip {
@@ -130,29 +137,46 @@ button {
   height: 100px;
   overflow: hidden;
   opacity: 0;
-  background:
-    radial-gradient(ellipse at 50% 46%, rgba(255, 24, 154, 0.22), transparent 68%),
-    linear-gradient(165deg, #160716 0%, #080108 50%, #020002 100%);
   transition: opacity 120ms linear;
 }
 
-.timer-screen.is-ready .timer-screen-base,
 .timer-screen.is-ready .timer-surface {
   opacity: 1;
 }
 
 .timer-digits {
   position: absolute;
-}
-
-.timer-digits {
   z-index: 1;
-  top: var(--timer-content-top, 8%);
-  right: var(--timer-content-right, 8%);
-  bottom: var(--timer-content-bottom, 8%);
-  left: var(--timer-content-left, 8%);
+  /* The former 84% × 84% area is reduced by 20% in the monitor's
+     local plane. Keep the lower part clear for the future unit label. */
+  top: 4%;
+  left: 16.4%;
+  width: 67.2%;
+  height: 67.2%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.timer-system[data-effects="on"] .timer-digits {
+  /* SourceGraphic supplies both the sharp image and the glow from the exact
+     same animation frame; no second WebP playback can drift out of sync. */
+  filter: url(#timer-digit-light);
+}
+
+.timer-filter-definitions {
+  position: absolute;
+  pointer-events: none;
+}
+
+.timer-glass {
+  position: absolute;
+  z-index: 3;
+  display: block;
+  opacity: 1;
+  mix-blend-mode: normal;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .timer-digit {
@@ -176,11 +200,12 @@ button {
 
 .timer-glow-layer {
   position: absolute;
-  z-index: 3;
-  top: 58.263889%;
+  z-index: 0;
+  top: 0;
   left: 0;
-  width: 100%;
-  height: 33.333333%;
+  width: 390px;
+  height: 240px;
+  transform-origin: 0 0;
   overflow: visible;
   opacity: 0;
   pointer-events: none;
@@ -188,7 +213,12 @@ button {
 }
 
 .timer-glow-layer.is-ready {
-  opacity: 1;
+  opacity: 0.32;
+}
+
+.timer-system[data-effects="off"] .timer-screen-backgrounds,
+.timer-system[data-effects="off"] .timer-glow-layer {
+  display: none;
 }
 
 .timer-glow-image,
@@ -449,7 +479,6 @@ button {
     scroll-behavior: auto !important;
   }
 
-  .timer-screen-base,
   .timer-surface,
   .timer-glow-layer,
   .nav-button {

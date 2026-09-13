@@ -1,0 +1,195 @@
+{
+  "version": 6,
+  "material_change": "Photographic reflection and wear maps, smoke tint and true RGBA transparency; exact geometry retained from v3-v5.",
+  "stage": {
+    "width": 390,
+    "height": 720
+  },
+  "corner_order": [
+    "top-left",
+    "top-right",
+    "bottom-right",
+    "bottom-left"
+  ],
+  "screens": [
+    {
+      "id": "glass-top-left",
+      "x": 91.9609,
+      "y": 437.771,
+      "width": 66.87310000000001,
+      "height": 52.51599999999996,
+      "corners": [
+        [
+          91.9609,
+          442.832
+        ],
+        [
+          156.363,
+          437.771
+        ],
+        [
+          158.834,
+          486.834
+        ],
+        [
+          94.3401,
+          490.287
+        ]
+      ],
+      "web_scale": 4,
+      "master_scale": 16,
+      "web": "web/glass-top-left.png",
+      "master": "master/glass-top-left.png",
+      "svg": "editable/glass-top-left.svg",
+      "css_percent": {
+        "left": 23.57971794871795,
+        "top": 60.80152777777778,
+        "width": 17.14694871794872,
+        "height": 7.293888888888883
+      },
+      "unit": "days",
+      "source_mask": "masks/timer-days-mask.svg",
+      "source_path": "M91.960900 442.832000L156.363000 437.771000L158.834000 486.834000L94.340100 490.287000Z",
+      "geometry_source": "provided-mask"
+    },
+    {
+      "id": "glass-top-right",
+      "x": 235.02,
+      "y": 439.609,
+      "width": 61.56300000000002,
+      "height": 50.053,
+      "corners": [
+        [
+          235.789,
+          439.609
+        ],
+        [
+          296.583,
+          442.589
+        ],
+        [
+          295.831,
+          489.662
+        ],
+        [
+          235.02,
+          487.87
+        ]
+      ],
+      "web_scale": 4,
+      "master_scale": 16,
+      "web": "web/glass-top-right.png",
+      "master": "master/glass-top-right.png",
+      "svg": "editable/glass-top-right.svg",
+      "css_percent": {
+        "left": 60.261538461538464,
+        "top": 61.05680555555555,
+        "width": 15.78538461538462,
+        "height": 6.951805555555556
+      },
+      "unit": "hours",
+      "source_mask": "masks/timer-hours-mask.svg",
+      "source_path": "M235.789000 439.609000L296.583000 442.589000L295.831000 489.662000L235.020000 487.870000Z",
+      "geometry_source": "provided-mask"
+    },
+    {
+      "id": "glass-bottom-right",
+      "x": 220.655245,
+      "y": 546.855058,
+      "width": 60.50108199999997,
+      "height": 54.42897100000005,
+      "corners": [
+        [
+          220.655245,
+          555.643391
+        ],
+        [
+          278.86225,
+          546.855058
+        ],
+        [
+          281.156327,
+          591.039405
+        ],
+        [
+          223.429875,
+          601.284029
+        ]
+      ],
+      "web_scale": 4,
+      "master_scale": 16,
+      "web": "web/glass-bottom-right.png",
+      "master": "master/glass-bottom-right.png",
+      "svg": "editable/glass-bottom-right.svg",
+      "css_percent": {
+        "left": 56.57826794871795,
+        "top": 75.95209138888889,
+        "width": 15.513097948717942,
+        "height": 7.5595793055555625
+      },
+      "unit": "minutes",
+      "source_mask": "masks/timer-minutes-mask.svg",
+      "source_path": "M220.655245 555.643391L278.862250 546.855058L281.156327 591.039405L223.429875 601.284029Z",
+      "geometry_source": "prior-minutes-contour-registered-to-new-layout",
+      "reconstruction": {
+        "method": "least-squares affine registration from eight days/hours corners",
+        "matrix_row_vector": [
+          [
+            0.9696877173661247,
+            -0.0008029115654742027
+          ],
+          [
+            -0.0028602723147954316,
+            0.9711286660552172
+          ],
+          [
+            8.485189891631698,
+            -3.064114478190625
+          ]
+        ],
+        "rms_control_point_error": 0.23128094100813598,
+        "max_control_point_error": 0.4045625665006518,
+        "prior_minutes": [
+          [
+            220.5,
+            575.5
+          ],
+          [
+            280.5,
+            566.5
+          ],
+          [
+            283.0,
+            612.0
+          ],
+          [
+            223.5,
+            622.5
+          ]
+        ],
+        "reconstructed_minutes": [
+          [
+            220.655245,
+            555.643391
+          ],
+          [
+            278.86225,
+            546.855058
+          ],
+          [
+            281.156327,
+            591.039405
+          ],
+          [
+            223.429875,
+            601.284029
+          ]
+        ],
+        "note": "Control point residuals describe the fit on days/hours, not a measured accuracy bound for the unseen new minutes contour."
+      }
+    }
+  ],
+  "notes": [
+    "Days and hours use the new provided contours. Minutes uses the former correct lower-right contour transformed into the new layout using the same eight days/hours control points."
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "method": "least-squares affine registration from eight days/hours corners",
+  "matrix_row_vector": [
+    [
+      0.9696877173661247,
+      -0.0008029115654742027
+    ],
+    [
+      -0.0028602723147954316,
+      0.9711286660552172
+    ],
+    [
+      8.485189891631698,
+      -3.064114478190625
+    ]
+  ],
+  "rms_control_point_error": 0.23128094100813598,
+  "max_control_point_error": 0.4045625665006518,
+  "prior_minutes": [
+    [
+      220.5,
+      575.5
+    ],
+    [
+      280.5,
+      566.5
+    ],
+    [
+      283.0,
+      612.0
+    ],
+    [
+      223.5,
+      622.5
+    ]
+  ],
+  "reconstructed_minutes": [
+    [
+      220.655245,
+      555.643391
+    ],
+    [
+      278.86225,
+      546.855058
+    ],
+    [
+      281.156327,
+      591.039405
+    ],
+    [
+      223.429875,
+      601.284029
+    ]
+  ],
+  "note": "Control point residuals describe the fit on days/hours, not a measured accuracy bound for the unseen new minutes contour."
+}

@@ -17,7 +17,7 @@
     <link rel="preload" as="image" href="video-poster.png" />
     <link rel="preload" as="image" href="cigarette-idle-intro.webp?v=688799a7" />
     <link rel="preload" as="image" href="cigarette-idle-preview.webp?v=7203645e" />
-    <link rel="stylesheet" href="styles.css?v=20260913g" />
+    <link rel="stylesheet" href="styles.css?v=20260913background1" />
   </head>
   <body>
     <main class="app" data-app data-page="home" data-ready="false">
@@ -30,9 +30,33 @@
           <img class="background" data-background="rsvp" src="backgrounds/rsvp.png" alt="" />
         </div>
 
-        <div class="timer-system" data-countdown role="timer" aria-live="off">
+        <div class="timer-system" data-countdown data-effects="on" role="timer" aria-live="off">
+          <video
+            class="timer-screen-backgrounds"
+            data-timer-background-video
+            data-src="timer-backgrounds-v1/web/timer-backgrounds.webm"
+            poster="timer-backgrounds-v1/preview/poster-all.png"
+            preload="auto"
+            autoplay
+            loop
+            muted
+            playsinline
+            webkit-playsinline
+            disablepictureinpicture
+            aria-hidden="true"
+          ></video>
+          <svg class="timer-filter-definitions" aria-hidden="true" width="0" height="0" focusable="false">
+            <defs>
+              <filter id="timer-digit-light" x="-30%" y="-40%" width="160%" height="180%" color-interpolation-filters="sRGB">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+                <feComponentTransfer in="blur" result="light">
+                  <feFuncA type="linear" slope="0.45" />
+                </feComponentTransfer>
+                <feBlend in="light" in2="SourceGraphic" mode="screen" />
+              </filter>
+            </defs>
+          </svg>
           <div class="timer-screen" data-timer-screen="days" aria-label="DAYS: 00">
-            <div class="timer-screen-base" data-timer-clip aria-hidden="true"></div>
             <div class="timer-screen-clip" data-timer-clip>
               <div class="timer-surface" data-timer-surface>
                 <div class="timer-digits" aria-hidden="true">
@@ -41,10 +65,10 @@
                 </div>
               </div>
             </div>
+            <img class="timer-glass" data-timer-glass alt="" draggable="false" />
           </div>
 
           <div class="timer-screen" data-timer-screen="hours" aria-label="HOURS: 00">
-            <div class="timer-screen-base" data-timer-clip aria-hidden="true"></div>
             <div class="timer-screen-clip" data-timer-clip>
               <div class="timer-surface" data-timer-surface>
                 <div class="timer-digits" aria-hidden="true">
@@ -53,10 +77,10 @@
                 </div>
               </div>
             </div>
+            <img class="timer-glass" data-timer-glass alt="" draggable="false" />
           </div>
 
           <div class="timer-screen" data-timer-screen="minutes" aria-label="MINUTES: 00">
-            <div class="timer-screen-base" data-timer-clip aria-hidden="true"></div>
             <div class="timer-screen-clip" data-timer-clip>
               <div class="timer-surface" data-timer-surface>
                 <div class="timer-digits" aria-hidden="true">
@@ -65,6 +89,7 @@
                 </div>
               </div>
             </div>
+            <img class="timer-glass" data-timer-glass alt="" draggable="false" />
           </div>
 
           <div class="timer-glow-layer" data-timer-glow aria-hidden="true">
@@ -167,6 +192,6 @@
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260913f"></script>
+    <script type="module" src="app.js?v=20260913background1"></script>
   </body>
 </html>

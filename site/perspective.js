@@ -1,43 +1,8 @@
-const DESIGN_SIZE = Object.freeze({ width: 390, height: 720 });
+const LAYOUT_URL = new URL("./glass-overlays-v6/layout.json", import.meta.url);
 
 // Front-facing local coordinate system shared by all physical monitor planes.
-// The four destination corners below are the only values that need adjusting
-// when aligning a screen with revised artwork.
+// All destination corners and glass bounds come from the supplied layout.json.
 export const LOCAL_SCREEN_SIZE = Object.freeze({ width: 133.3333, height: 100 });
-
-export const screenLeft = Object.freeze({
-  tl: Object.freeze([87.5, 459.5]),
-  tr: Object.freeze([154, 454]),
-  br: Object.freeze([156.5, 504.5]),
-  bl: Object.freeze([90, 508]),
-  contentInset: Object.freeze({ top: 8, right: 8, bottom: 8, left: 8 }),
-});
-
-export const screenRight = Object.freeze({
-  tl: Object.freeze([235.5, 456]),
-  tr: Object.freeze([298.5, 459]),
-  br: Object.freeze([298, 508]),
-  bl: Object.freeze([235, 505.5]),
-  contentInset: Object.freeze({ top: 8, right: 8, bottom: 8, left: 8 }),
-});
-
-export const screenBottomRight = Object.freeze({
-  tl: Object.freeze([220.5, 575.5]),
-  tr: Object.freeze([280.5, 566.5]),
-  br: Object.freeze([283, 612]),
-  bl: Object.freeze([223.5, 622.5]),
-  contentInset: Object.freeze({ top: 8, right: 8, bottom: 8, left: 8 }),
-});
-
-const SCREEN_GEOMETRY = Object.freeze({
-  days: screenLeft,
-  hours: screenRight,
-  minutes: screenBottomRight,
-});
-
-function quadFromGeometry({ tl, tr, br, bl }) {
-  return [tl, tr, br, bl];
-}
 
 function solveLinearSystem(coefficients, results) {
   const size = results.length;
@@ -149,17 +114,11 @@ function matrixToCss(matrix) {
   return `matrix3d(${normalized.map((value) => value.toFixed(12)).join(",")})`;
 }
 
-function clipPathForQuad(quad) {
+function clipPathForQuad(quad, designSize) {
   const points = quad.map(
-    ([x, y]) => `${((x / DESIGN_SIZE.width) * 100).toFixed(6)}% ${((y / DESIGN_SIZE.height) * 100).toFixed(6)}%`,
+    ([x, y]) => `${((x / designSize.width) * 100).toFixed(6)}% ${((y / designSize.height) * 100).toFixed(6)}%`,
   );
   return `polygon(${points.join(",")})`;
-}
-
-function setContentInset(surface, contentInset) {
-  Object.entries(contentInset).forEach(([side, value]) => {
-    surface.style.setProperty(`--timer-content-${side}`, `${value}%`);
-  });
 }
 
 export class PerspectiveLayout {
@@ -170,30 +129,8 @@ export class PerspectiveLayout {
     this.lastWidth = 0;
     this.lastHeight = 0;
     this.frameRequest = 0;
-
-    timerRoot.querySelectorAll("[data-timer-screen]").forEach((element) => {
-      const name = element.dataset.timerScreen;
-      const geometry = SCREEN_GEOMETRY[name];
-
-      if (!geometry) {
-        return;
-      }
-
-      const surface = element.querySelector("[data-timer-surface]");
-      surface.style.width = `${LOCAL_SCREEN_SIZE.width}px`;
-      surface.style.height = `${LOCAL_SCREEN_SIZE.height}px`;
-
-      if (surface) {
-        setContentInset(surface, geometry.contentInset);
-      }
-
-      this.screens.set(name, {
-        element,
-        surface,
-        clipElements: [...element.querySelectorAll("[data-timer-clip]")],
-        quad: quadFromGeometry(geometry),
-      });
-    });
+    this.destroyed = false;
+    this.glow = timerRoot.querySelector("[data-timer-glow]");
 
     this.handleViewportChange = () => this.requestRefresh();
     this.resizeObserver = "ResizeObserver" in window
@@ -204,19 +141,52 @@ export class PerspectiveLayout {
     window.addEventListener("orientationchange", this.handleViewportChange, { passive: true });
     window.visualViewport?.addEventListener("resize", this.handleViewportChange, { passive: true });
 
-    this.updateClipPaths();
-    this.refresh(true);
+    this.ready = this.loadLayout().catch((error) => {
+      console.error("Не удалось загрузить геометрию экранов таймера", error);
+    });
   }
 
-  updateClipPaths() {
-    this.screens.forEach((screen) => {
-      const clipPath = clipPathForQuad(screen.quad);
+  async loadLayout() {
+    const response = await fetch(LAYOUT_URL);
+    if (!response.ok) {
+      throw new Error(`layout.json: HTTP ${response.status}`);
+    }
+    const layout = await response.json();
+    if (this.destroyed) {
+      return;
+    }
+    this.designSize = layout.stage;
+    // The existing halo movie was drawn around the previous monitor layout.
+    // Its registration is retained in v6; this transform applies only to
+    // those exterior reflections, never to the already projected glass PNGs.
+    this.glowRegistration = layout.screens.find((screen) => screen.unit === "minutes")
+      ?.reconstruction?.matrix_row_vector;
 
-      screen.clipElements.forEach((element) => {
-        element.style.clipPath = clipPath;
-        element.style.webkitClipPath = clipPath;
+    this.timerRoot.querySelectorAll("[data-timer-screen]").forEach((element) => {
+      const name = element.dataset.timerScreen;
+      const geometry = layout.screens.find((screen) => screen.unit === name);
+      if (!geometry) {
+        throw new Error(`В layout.json отсутствует экран ${name}`);
+      }
+      const surfaces = [...element.querySelectorAll("[data-timer-surface]")];
+      surfaces.forEach((surface) => {
+        surface.style.width = `${LOCAL_SCREEN_SIZE.width}px`;
+        surface.style.height = `${LOCAL_SCREEN_SIZE.height}px`;
       });
+      const clipPath = clipPathForQuad(geometry.corners, this.designSize);
+      element.querySelectorAll("[data-timer-clip]").forEach((clip) => {
+        clip.style.clipPath = clipPath;
+        clip.style.webkitClipPath = clipPath;
+      });
+      const glass = element.querySelector("[data-timer-glass]");
+      glass.src = new URL(geometry.web, LAYOUT_URL).href;
+      Object.entries(geometry.css_percent).forEach(([property, value]) => {
+        glass.style[property] = `${value}%`;
+      });
+      this.screens.set(name, { element, surfaces, quad: geometry.corners });
     });
+    this.refresh(true);
+    this.timerRoot.dataset.layoutReady = "true";
   }
 
   requestRefresh() {
@@ -231,28 +201,37 @@ export class PerspectiveLayout {
   }
 
   refresh(force = false) {
-    const width = this.scene.clientWidth;
-    const height = this.scene.clientHeight;
+    // Keep subpixel dimensions: integer clientWidth/clientHeight can shift the
+    // projected digits relative to percentage-positioned glass on small screens.
+    const { width, height } = this.scene.getBoundingClientRect();
 
-    if (!width || !height || (!force && width === this.lastWidth && height === this.lastHeight)) {
+    if (!this.designSize || !width || !height || (!force && width === this.lastWidth && height === this.lastHeight)) {
       return;
     }
 
     this.lastWidth = width;
     this.lastHeight = height;
-    const scaleX = width / DESIGN_SIZE.width;
-    const scaleY = height / DESIGN_SIZE.height;
+    const scaleX = width / this.designSize.width;
+    const scaleY = height / this.designSize.height;
 
     this.screens.forEach((screen) => {
       const targetQuad = screen.quad.map(([x, y]) => [x * scaleX, y * scaleY]);
 
-      screen.surface.style.transform = matrixToCss(
+      const transform = matrixToCss(
         homographyMatrix(LOCAL_SCREEN_SIZE.width, LOCAL_SCREEN_SIZE.height, targetQuad),
       );
+      screen.surfaces.forEach((surface) => { surface.style.transform = transform; });
     });
+
+    if (this.glow && this.glowRegistration) {
+      const [[a, b], [c, d], [e, f]] = this.glowRegistration;
+      // The 780 × 480 movie occupied x=0, y=419.5, w=390, h=240.
+      this.glow.style.transform = `matrix(${a * scaleX},${b * scaleY},${c * scaleX},${d * scaleY},${(e + c * 419.5) * scaleX},${(f + d * 419.5) * scaleY})`;
+    }
   }
 
   destroy() {
+    this.destroyed = true;
     if (this.frameRequest) {
       cancelAnimationFrame(this.frameRequest);
     }
