@@ -1,36 +1,52 @@
 const DESIGN_SIZE = Object.freeze({ width: 390, height: 720 });
+const MASK_REVISION = "20260913";
 
 // Fallbacks mirror the current SVG files and keep the timer usable on file://,
 // where browsers can block fetch() for local SVGs.
 const SCREEN_DEFINITIONS = Object.freeze({
   days: Object.freeze({
-    maskUrl: new URL("mask-timer/timer-days-mask.svg", import.meta.url).href,
+    maskUrl: new URL(`mask-timer/timer-days-mask.svg?v=${MASK_REVISION}`, import.meta.url).href,
     quad: Object.freeze([
-      [97, 436.5],
-      [166.5, 433],
-      [168.5, 492],
-      [98.5, 494],
+      [87.5, 459.5],
+      [154, 454],
+      [156.5, 504.5],
+      [90, 508],
     ]),
   }),
   hours: Object.freeze({
-    maskUrl: new URL("mask-timer/timer-hours-mask.svg", import.meta.url).href,
+    maskUrl: new URL(`mask-timer/timer-hours-mask.svg?v=${MASK_REVISION}`, import.meta.url).href,
     quad: Object.freeze([
-      [229, 436],
-      [288, 437],
-      [289, 493.5],
-      [230, 497.5],
+      [235.5, 456],
+      [298.5, 459],
+      [298, 508],
+      [235, 505.5],
     ]),
   }),
   minutes: Object.freeze({
-    maskUrl: new URL("mask-timer/timer-minutes-mask.svg", import.meta.url).href,
+    maskUrl: new URL(`mask-timer/timer-minutes-mask.svg?v=${MASK_REVISION}`, import.meta.url).href,
     quad: Object.freeze([
-      [214, 533.5],
-      [279.5, 528.5],
-      [279, 584],
-      [213.5, 594.5],
+      [220.5, 575.5],
+      [280.5, 566.5],
+      [283, 612],
+      [223.5, 622.5],
     ]),
   }),
 });
+
+function distance([x1, y1], [x2, y2]) {
+  return Math.hypot(x2 - x1, y2 - y1);
+}
+
+function surfaceSizeForQuad([topLeft, topRight, bottomRight, bottomLeft]) {
+  const width = (distance(topLeft, topRight) + distance(bottomLeft, bottomRight)) / 2;
+  const height = (distance(topLeft, bottomLeft) + distance(topRight, bottomRight)) / 2;
+  const sourceHeight = 100;
+
+  return {
+    width: sourceHeight * (width / height),
+    height: sourceHeight,
+  };
+}
 
 function orderQuad(points) {
   const bySum = [...points].sort((a, b) => a[0] + a[1] - (b[0] + b[1]));
@@ -155,6 +171,8 @@ export class PerspectiveLayout {
       });
     });
 
+    this.updateSurfaceSizes();
+
     this.handleViewportChange = () => this.requestRefresh();
     this.resizeObserver = "ResizeObserver" in window
       ? new ResizeObserver(this.handleViewportChange)
@@ -181,7 +199,23 @@ export class PerspectiveLayout {
     );
 
     this.updateClipPaths();
+    this.updateSurfaceSizes();
     this.refresh(true);
+  }
+
+  updateSurfaceSizes() {
+    this.screens.forEach((screen) => {
+      const { width, height } = surfaceSizeForQuad(screen.quad);
+
+      [screen.surface, screen.glowSurface].forEach((surface) => {
+        if (!surface) {
+          return;
+        }
+
+        surface.style.width = `${width.toFixed(4)}px`;
+        surface.style.height = `${height}px`;
+      });
+    });
   }
 
   updateClipPaths() {

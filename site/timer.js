@@ -1,8 +1,8 @@
 import {
   loadDigitAsset,
   preloadDigitAssets,
-} from "./assets-loader.js?v=bf83544";
-import { PerspectiveLayout } from "./perspective.js?v=bf83544";
+} from "./assets-loader.js?v=20260913";
+import { PerspectiveLayout } from "./perspective.js?v=20260913";
 
 export const COUNTDOWN_CONFIG = Object.freeze({
   // No timezone suffix means device-local time. Change this one value when the

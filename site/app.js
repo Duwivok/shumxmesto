@@ -1,4 +1,4 @@
-import { initCountdownTimer } from "./timer.js?v=bf83544";
+import { initCountdownTimer } from "./timer.js?v=20260913";
 
 const PAGES = new Set(["home", "lineup", "bar", "rsvp"]);
 
