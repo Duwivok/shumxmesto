@@ -1,13 +1,13 @@
 import { initCountdownTimer } from "./timer.js?v=20260914words1";
 import { initTimerScreenBackground } from "./timer-background.js?v=20260913background1";
+import { initNavigation } from "./navigation.js?v=20260914carousel1";
 
-const PAGES = new Set(["home", "lineup", "bar", "rsvp"]);
+const PAGES = new Set(["home", "lineup", "bar", "rsvp", "geo"]);
 
 const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
-const navigationButtons = [...document.querySelectorAll("[data-target]")];
 const navigationImages = [...document.querySelectorAll(".nav-button-art")];
-const navigationMotion = navigationButtons.map((button) => button.querySelector(".nav-button-motion"));
+const navigation = initNavigation(document.querySelector("[data-navigation]"), (page) => showPage(page));
 const timerGlow = document.querySelector("[data-timer-glow]");
 const timerGlowImage = document.querySelector("[data-timer-glow-image]");
 const timerGlowVideo = document.querySelector("[data-timer-glow-video]");
@@ -20,7 +20,6 @@ const timerScreenBackground = initTimerScreenBackground(document.querySelector("
 let cigarettePlaybackId = 0;
 let cigaretteResetTimer = 0;
 let cigaretteIdleLoopTimer = 0;
-let navigationCrumpleTimer = 0;
 let cigaretteHasBeenPressed = false;
 let cigaretteIdleIntroHasStarted = false;
 
@@ -200,13 +199,7 @@ function showPage(page, { updateUrl = true } = {}) {
     background.classList.toggle("is-active", background.dataset.background === nextPage);
   });
 
-  navigationButtons.forEach((button) => {
-    if (button.dataset.target === nextPage) {
-      button.setAttribute("aria-current", "page");
-    } else {
-      button.removeAttribute("aria-current");
-    }
-  });
+  navigation.setPage(nextPage);
 
   if (updateUrl && window.location.hash !== `#${nextPage}`) {
     window.history.pushState({ page: nextPage }, "", `#${nextPage}`);
@@ -304,38 +297,11 @@ function initTimerGlow() {
   showTimerGlowVideo();
 }
 
-function crumpleNavigation(tappedIndex) {
-  window.clearTimeout(navigationCrumpleTimer);
-
-  navigationMotion.forEach((motion, index) => {
-    motion.classList.remove("is-crumpling");
-    motion.style.setProperty("--crumple-delay", `${Math.abs(index - tappedIndex) * 70}ms`);
-  });
-
-  void app.offsetWidth;
-
-  navigationMotion.forEach((motion) => motion.classList.add("is-crumpling"));
-
-  navigationCrumpleTimer = window.setTimeout(() => {
-    navigationMotion.forEach((motion) => motion.classList.remove("is-crumpling"));
-  }, 960);
-}
-
-navigationMotion.forEach((motion) => {
-  motion.addEventListener("animationend", () => motion.classList.remove("is-crumpling"));
-});
-
-navigationButtons.forEach((button, index) => {
-  button.addEventListener("click", () => {
-    crumpleNavigation(index);
-    showPage(button.dataset.target);
-  });
-});
-
 cigaretteButton.addEventListener("click", restartCigaretteAnimation);
 cigaretteVideo.addEventListener("ended", finishCigaretteAnimation);
 
 window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: false }));
+window.addEventListener("hashchange", () => showPage(pageFromHash(), { updateUrl: false }));
 document.addEventListener("visibilitychange", syncTimerGlowPlayback);
 
 initTimerGlow();

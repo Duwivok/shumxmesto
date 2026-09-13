@@ -6,28 +6,31 @@
     <meta name="theme-color" content="#000000" />
     <title>SHÜM</title>
 
-    <link rel="preload" as="image" href="backgrounds/home.png?v=20260913" />
-    <link rel="preload" as="image" href="backgrounds/lineup.png" />
-    <link rel="preload" as="image" href="backgrounds/bar.png" />
-    <link rel="preload" as="image" href="backgrounds/rsvp.png" />
-    <link rel="preload" as="image" href="navigation/nav-3a-lineup.png" />
-    <link rel="preload" as="image" href="navigation/nav-3a-shum.png" />
-    <link rel="preload" as="image" href="navigation/nav-3a-rsvp.png" />
-    <link rel="preload" as="image" href="navigation/nav-3a-bar.png" />
+    <link rel="preload" as="image" href="backgrounds/home.png?v=9d1596f35f" />
+    <link rel="preload" as="image" href="backgrounds/lineup.png?v=e0cb8737cd" />
+    <link rel="preload" as="image" href="backgrounds/bar.png?v=027f2cc6c5" />
+    <link rel="preload" as="image" href="backgrounds/rsvp.png?v=6c1d899676" />
+    <link rel="preload" as="image" href="cat.jpg?v=919838aa23" />
+    <link rel="preload" as="image" href="navigation/nav-1b-geo.png" />
+    <link rel="preload" as="image" href="navigation/nav-1b-lineup.png" />
+    <link rel="preload" as="image" href="navigation/nav-1b-shum.png" />
+    <link rel="preload" as="image" href="navigation/nav-1b-rsvp.png" />
+    <link rel="preload" as="image" href="navigation/nav-1b-bar.png" />
     <link rel="preload" as="image" href="video-poster.png" />
     <link rel="preload" as="image" href="cigarette-idle-intro.webp?v=688799a7" />
     <link rel="preload" as="image" href="cigarette-idle-preview.webp?v=7203645e" />
-    <link rel="stylesheet" href="styles.css?v=20260914words2" />
+    <link rel="stylesheet" href="styles.css?v=20260914carousel1" />
   </head>
   <body>
     <main class="app" data-app data-page="home" data-ready="false">
       <div class="scene" aria-live="polite">
         <!-- Keeping every screen mounted makes switching instant and flash-free. -->
         <div class="backgrounds" aria-hidden="true">
-          <img class="background is-active" data-background="home" src="backgrounds/home.png?v=20260913" alt="" />
-          <img class="background" data-background="lineup" src="backgrounds/lineup.png" alt="" />
-          <img class="background" data-background="bar" src="backgrounds/bar.png" alt="" />
-          <img class="background" data-background="rsvp" src="backgrounds/rsvp.png" alt="" />
+          <img class="background is-active" data-background="home" src="backgrounds/home.png?v=9d1596f35f" alt="" />
+          <img class="background" data-background="lineup" src="backgrounds/lineup.png?v=e0cb8737cd" alt="" />
+          <img class="background" data-background="bar" src="backgrounds/bar.png?v=027f2cc6c5" alt="" />
+          <img class="background" data-background="rsvp" src="backgrounds/rsvp.png?v=6c1d899676" alt="" />
+          <img class="background" data-background="geo" src="cat.jpg?v=919838aa23" alt="" />
         </div>
 
         <div class="timer-system" data-countdown data-effects="on" role="timer" aria-live="off">
@@ -176,40 +179,59 @@
         </button>
 
         <div class="navigation">
-          <nav class="navigation-buttons" aria-label="Основная навигация">
-            <button class="nav-button" type="button" data-target="lineup" aria-label="Лайн-ап">
-              <span class="nav-button-motion">
-                <span class="nav-button-sway">
-                  <img class="nav-button-art" src="navigation/nav-3a-lineup.png" alt="" draggable="false" />
-                </span>
-              </span>
-            </button>
-            <button class="nav-button" type="button" data-target="home" aria-label="SHÜM — главная" aria-current="page">
-              <span class="nav-button-motion">
-                <span class="nav-button-sway nav-button-sway--reverse">
-                  <img class="nav-button-art" src="navigation/nav-3a-shum.png" alt="" draggable="false" />
-                </span>
-              </span>
-            </button>
-            <button class="nav-button" type="button" data-target="rsvp" aria-label="RSVP">
-              <span class="nav-button-motion">
-                <span class="nav-button-sway">
-                  <img class="nav-button-art" src="navigation/nav-3a-rsvp.png" alt="" draggable="false" />
-                </span>
-              </span>
-            </button>
-            <button class="nav-button" type="button" data-target="bar" aria-label="Бар">
-              <span class="nav-button-motion">
-                <span class="nav-button-sway nav-button-sway--reverse">
-                  <img class="nav-button-art" src="navigation/nav-3a-bar.png" alt="" draggable="false" />
-                </span>
-              </span>
-            </button>
+          <nav class="navigation-buttons" data-navigation aria-label="Основная навигация">
+            <div class="navigation-track">
+              <div class="nav-slot">
+                <button class="nav-button" type="button" data-target="geo" aria-label="Гео" tabindex="-1">
+                  <span class="nav-button-motion">
+                    <span class="nav-button-sway">
+                      <img class="nav-button-art" src="navigation/nav-1b-geo.png" alt="" draggable="false" />
+                    </span>
+                  </span>
+                </button>
+              </div>
+              <div class="nav-slot">
+                <button class="nav-button" type="button" data-target="lineup" aria-label="Лайн-ап" tabindex="-1">
+                  <span class="nav-button-motion">
+                    <span class="nav-button-sway nav-button-sway--reverse">
+                      <img class="nav-button-art" src="navigation/nav-1b-lineup.png" alt="" draggable="false" />
+                    </span>
+                  </span>
+                </button>
+              </div>
+              <div class="nav-slot">
+                <button class="nav-button" type="button" data-target="home" aria-label="SHÜM — главная" aria-current="page">
+                  <span class="nav-button-motion">
+                    <span class="nav-button-sway">
+                      <img class="nav-button-art" src="navigation/nav-1b-shum.png" alt="" draggable="false" />
+                    </span>
+                  </span>
+                </button>
+              </div>
+              <div class="nav-slot">
+                <button class="nav-button" type="button" data-target="rsvp" aria-label="RSVP" tabindex="-1">
+                  <span class="nav-button-motion">
+                    <span class="nav-button-sway nav-button-sway--reverse">
+                      <img class="nav-button-art" src="navigation/nav-1b-rsvp.png" alt="" draggable="false" />
+                    </span>
+                  </span>
+                </button>
+              </div>
+              <div class="nav-slot">
+                <button class="nav-button" type="button" data-target="bar" aria-label="Бар" tabindex="-1">
+                  <span class="nav-button-motion">
+                    <span class="nav-button-sway">
+                      <img class="nav-button-art" src="navigation/nav-1b-bar.png" alt="" draggable="false" />
+                    </span>
+                  </span>
+                </button>
+              </div>
+            </div>
           </nav>
         </div>
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260914words1"></script>
+    <script type="module" src="app.js?v=20260914carousel1"></script>
   </body>
 </html>
