@@ -10,14 +10,14 @@
     <link rel="preload" as="image" href="backgrounds/lineup.png" />
     <link rel="preload" as="image" href="backgrounds/bar.png" />
     <link rel="preload" as="image" href="backgrounds/rsvp.png" />
-    <link rel="preload" as="image" href="navigation/nav-home.png" />
-    <link rel="preload" as="image" href="navigation/nav-lineup.png" />
-    <link rel="preload" as="image" href="navigation/nav-bar.png" />
-    <link rel="preload" as="image" href="navigation/nav-rsvp.png?v=d22c3e26" />
+    <link rel="preload" as="image" href="navigation/nav-3a-lineup.png" />
+    <link rel="preload" as="image" href="navigation/nav-3a-shum.png" />
+    <link rel="preload" as="image" href="navigation/nav-3a-rsvp.png" />
+    <link rel="preload" as="image" href="navigation/nav-3a-bar.png" />
     <link rel="preload" as="image" href="video-poster.png" />
     <link rel="preload" as="image" href="cigarette-idle-intro.webp?v=688799a7" />
     <link rel="preload" as="image" href="cigarette-idle-preview.webp?v=7203645e" />
-    <link rel="stylesheet" href="styles.css?v=20260913f" />
+    <link rel="stylesheet" href="styles.css?v=20260913g" />
   </head>
   <body>
     <main class="app" data-app data-page="home" data-ready="false">
@@ -33,44 +33,60 @@
         <div class="timer-system" data-countdown role="timer" aria-live="off">
           <div class="timer-screen" data-timer-screen="days" aria-label="DAYS: 00">
             <div class="timer-screen-base" data-timer-clip aria-hidden="true"></div>
-            <div class="timer-glow-surface" data-timer-glow-surface aria-hidden="true"></div>
             <div class="timer-screen-clip" data-timer-clip>
               <div class="timer-surface" data-timer-surface>
                 <div class="timer-digits" aria-hidden="true">
                   <span class="timer-digit"><img data-timer-digit alt="" draggable="false" /></span>
                   <span class="timer-digit"><img data-timer-digit alt="" draggable="false" /></span>
                 </div>
-                <div class="timer-screen-fx" aria-hidden="true"></div>
               </div>
             </div>
           </div>
 
           <div class="timer-screen" data-timer-screen="hours" aria-label="HOURS: 00">
             <div class="timer-screen-base" data-timer-clip aria-hidden="true"></div>
-            <div class="timer-glow-surface" data-timer-glow-surface aria-hidden="true"></div>
             <div class="timer-screen-clip" data-timer-clip>
               <div class="timer-surface" data-timer-surface>
                 <div class="timer-digits" aria-hidden="true">
                   <span class="timer-digit"><img data-timer-digit alt="" draggable="false" /></span>
                   <span class="timer-digit"><img data-timer-digit alt="" draggable="false" /></span>
                 </div>
-                <div class="timer-screen-fx" aria-hidden="true"></div>
               </div>
             </div>
           </div>
 
           <div class="timer-screen" data-timer-screen="minutes" aria-label="MINUTES: 00">
             <div class="timer-screen-base" data-timer-clip aria-hidden="true"></div>
-            <div class="timer-glow-surface" data-timer-glow-surface aria-hidden="true"></div>
             <div class="timer-screen-clip" data-timer-clip>
               <div class="timer-surface" data-timer-surface>
                 <div class="timer-digits" aria-hidden="true">
                   <span class="timer-digit"><img data-timer-digit alt="" draggable="false" /></span>
                   <span class="timer-digit"><img data-timer-digit alt="" draggable="false" /></span>
                 </div>
-                <div class="timer-screen-fx" aria-hidden="true"></div>
               </div>
             </div>
+          </div>
+
+          <div class="timer-glow-layer" data-timer-glow aria-hidden="true">
+            <img
+              class="timer-glow-image"
+              data-timer-glow-image
+              data-src="glow/timer-glow.webp?v=20260913c"
+              alt=""
+              draggable="false"
+            />
+            <video
+              class="timer-glow-video"
+              data-timer-glow-video
+              data-src="glow/timer-glow.webm?v=20260913c"
+              preload="none"
+              autoplay
+              muted
+              loop
+              playsinline
+              webkit-playsinline
+              disablepictureinpicture
+            ></video>
           </div>
         </div>
 
@@ -117,45 +133,40 @@
         </button>
 
         <div class="navigation">
-          <img
-            class="navigation-art is-active"
-            data-navigation="home"
-            src="navigation/nav-home.png"
-            alt=""
-            aria-hidden="true"
-          />
-          <img
-            class="navigation-art"
-            data-navigation="lineup"
-            src="navigation/nav-lineup.png"
-            alt=""
-            aria-hidden="true"
-          />
-          <img
-            class="navigation-art"
-            data-navigation="bar"
-            src="navigation/nav-bar.png"
-            alt=""
-            aria-hidden="true"
-          />
-          <img
-            class="navigation-art"
-            data-navigation="rsvp"
-            src="navigation/nav-rsvp.png?v=d22c3e26"
-            alt=""
-            aria-hidden="true"
-          />
-
-          <nav class="navigation-hit-areas" aria-label="Основная навигация">
-            <button class="nav-hit" type="button" data-target="lineup" aria-label="Лайн-ап"></button>
-            <button class="nav-hit" type="button" data-target="home" aria-label="SHÜM — главная"></button>
-            <button class="nav-hit" type="button" data-target="bar" aria-label="Бар"></button>
-            <button class="nav-hit" type="button" data-target="rsvp" aria-label="RSVP"></button>
+          <nav class="navigation-buttons" aria-label="Основная навигация">
+            <button class="nav-button" type="button" data-target="lineup" aria-label="Лайн-ап">
+              <span class="nav-button-motion">
+                <span class="nav-button-sway">
+                  <img class="nav-button-art" src="navigation/nav-3a-lineup.png" alt="" draggable="false" />
+                </span>
+              </span>
+            </button>
+            <button class="nav-button" type="button" data-target="home" aria-label="SHÜM — главная" aria-current="page">
+              <span class="nav-button-motion">
+                <span class="nav-button-sway nav-button-sway--reverse">
+                  <img class="nav-button-art" src="navigation/nav-3a-shum.png" alt="" draggable="false" />
+                </span>
+              </span>
+            </button>
+            <button class="nav-button" type="button" data-target="rsvp" aria-label="RSVP">
+              <span class="nav-button-motion">
+                <span class="nav-button-sway">
+                  <img class="nav-button-art" src="navigation/nav-3a-rsvp.png" alt="" draggable="false" />
+                </span>
+              </span>
+            </button>
+            <button class="nav-button" type="button" data-target="bar" aria-label="Бар">
+              <span class="nav-button-motion">
+                <span class="nav-button-sway nav-button-sway--reverse">
+                  <img class="nav-button-art" src="navigation/nav-3a-bar.png" alt="" draggable="false" />
+                </span>
+              </span>
+            </button>
           </nav>
         </div>
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260913e"></script>
+    <script type="module" src="app.js?v=20260913f"></script>
   </body>
 </html>

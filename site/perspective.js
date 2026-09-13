@@ -1,132 +1,144 @@
 const DESIGN_SIZE = Object.freeze({ width: 390, height: 720 });
-const MASK_REVISION = "20260913";
 
-// Fallbacks mirror the current SVG files and keep the timer usable on file://,
-// where browsers can block fetch() for local SVGs.
-const SCREEN_DEFINITIONS = Object.freeze({
-  days: Object.freeze({
-    maskUrl: new URL(`mask-timer/timer-days-mask.svg?v=${MASK_REVISION}`, import.meta.url).href,
-    quad: Object.freeze([
-      [87.5, 459.5],
-      [154, 454],
-      [156.5, 504.5],
-      [90, 508],
-    ]),
-  }),
-  hours: Object.freeze({
-    maskUrl: new URL(`mask-timer/timer-hours-mask.svg?v=${MASK_REVISION}`, import.meta.url).href,
-    quad: Object.freeze([
-      [235.5, 456],
-      [298.5, 459],
-      [298, 508],
-      [235, 505.5],
-    ]),
-  }),
-  minutes: Object.freeze({
-    maskUrl: new URL(`mask-timer/timer-minutes-mask.svg?v=${MASK_REVISION}`, import.meta.url).href,
-    quad: Object.freeze([
-      [220.5, 575.5],
-      [280.5, 566.5],
-      [283, 612],
-      [223.5, 622.5],
-    ]),
-  }),
+// Front-facing local coordinate system shared by all physical monitor planes.
+// The four destination corners below are the only values that need adjusting
+// when aligning a screen with revised artwork.
+export const LOCAL_SCREEN_SIZE = Object.freeze({ width: 133.3333, height: 100 });
+
+export const screenLeft = Object.freeze({
+  tl: Object.freeze([87.5, 459.5]),
+  tr: Object.freeze([154, 454]),
+  br: Object.freeze([156.5, 504.5]),
+  bl: Object.freeze([90, 508]),
+  contentInset: Object.freeze({ top: 8, right: 8, bottom: 8, left: 8 }),
 });
 
-function distance([x1, y1], [x2, y2]) {
-  return Math.hypot(x2 - x1, y2 - y1);
+export const screenRight = Object.freeze({
+  tl: Object.freeze([235.5, 456]),
+  tr: Object.freeze([298.5, 459]),
+  br: Object.freeze([298, 508]),
+  bl: Object.freeze([235, 505.5]),
+  contentInset: Object.freeze({ top: 8, right: 8, bottom: 8, left: 8 }),
+});
+
+export const screenBottomRight = Object.freeze({
+  tl: Object.freeze([220.5, 575.5]),
+  tr: Object.freeze([280.5, 566.5]),
+  br: Object.freeze([283, 612]),
+  bl: Object.freeze([223.5, 622.5]),
+  contentInset: Object.freeze({ top: 8, right: 8, bottom: 8, left: 8 }),
+});
+
+const SCREEN_GEOMETRY = Object.freeze({
+  days: screenLeft,
+  hours: screenRight,
+  minutes: screenBottomRight,
+});
+
+function quadFromGeometry({ tl, tr, br, bl }) {
+  return [tl, tr, br, bl];
 }
 
-function surfaceSizeForQuad([topLeft, topRight, bottomRight, bottomLeft]) {
-  const width = (distance(topLeft, topRight) + distance(bottomLeft, bottomRight)) / 2;
-  const height = (distance(topLeft, bottomLeft) + distance(topRight, bottomRight)) / 2;
-  const sourceHeight = 100;
+function solveLinearSystem(coefficients, results) {
+  const size = results.length;
+  const rows = coefficients.map((row, index) => [...row, results[index]]);
 
-  return {
-    width: sourceHeight * (width / height),
-    height: sourceHeight,
-  };
-}
+  for (let column = 0; column < size; column += 1) {
+    let pivotRow = column;
 
-function orderQuad(points) {
-  const bySum = [...points].sort((a, b) => a[0] + a[1] - (b[0] + b[1]));
-  const byDifference = [...points].sort((a, b) => a[0] - a[1] - (b[0] - b[1]));
+    for (let row = column + 1; row < size; row += 1) {
+      if (Math.abs(rows[row][column]) > Math.abs(rows[pivotRow][column])) {
+        pivotRow = row;
+      }
+    }
 
-  return [bySum[0], byDifference.at(-1), bySum.at(-1), byDifference[0]];
-}
+    if (Math.abs(rows[pivotRow][column]) < 1e-10) {
+      throw new Error("Невозможно построить проективную матрицу для вырожденного экрана");
+    }
 
-function extractQuad(svgText) {
-  const svg = new DOMParser().parseFromString(svgText, "image/svg+xml");
-  const pathData = svg.querySelector("path")?.getAttribute("d") ?? "";
-  const pointPattern = /[ML]\s*(-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)\s*[, ]\s*(-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)/gi;
-  const points = [...pathData.matchAll(pointPattern)].map((match) => [
-    Number(match[1]),
-    Number(match[2]),
-  ]);
+    [rows[column], rows[pivotRow]] = [rows[pivotRow], rows[column]];
+    const pivot = rows[column][column];
 
-  if (
-    points.length > 1
-    && points[0][0] === points.at(-1)[0]
-    && points[0][1] === points.at(-1)[1]
-  ) {
-    points.pop();
+    for (let index = column; index <= size; index += 1) {
+      rows[column][index] /= pivot;
+    }
+
+    for (let row = 0; row < size; row += 1) {
+      if (row === column) {
+        continue;
+      }
+
+      const factor = rows[row][column];
+
+      for (let index = column; index <= size; index += 1) {
+        rows[row][index] -= factor * rows[column][index];
+      }
+    }
   }
 
-  if (points.length !== 4 || points.flat().some((coordinate) => !Number.isFinite(coordinate))) {
-    throw new Error("Маска экрана должна содержать четырёхточечный M/L path");
-  }
-
-  return orderQuad(points);
+  return rows.map((row) => row[size]);
 }
 
-async function loadMaskQuad(maskUrl) {
-  const response = await fetch(maskUrl);
+export function homographyMatrix(sourceWidth, sourceHeight, targetQuad) {
+  const sourceQuad = [
+    [0, 0],
+    [sourceWidth, 0],
+    [sourceWidth, sourceHeight],
+    [0, sourceHeight],
+  ];
+  const coefficients = [];
+  const results = [];
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} при загрузке ${maskUrl}`);
-  }
+  sourceQuad.forEach(([sourceX, sourceY], index) => {
+    const [targetX, targetY] = targetQuad[index];
 
-  return extractQuad(await response.text());
-}
+    coefficients.push([
+      sourceX,
+      sourceY,
+      1,
+      0,
+      0,
+      0,
+      -targetX * sourceX,
+      -targetX * sourceY,
+    ]);
+    results.push(targetX);
 
-function homographyMatrix(sourceWidth, sourceHeight, targetQuad) {
-  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = targetQuad;
-  const deltaX1 = x1 - x2;
-  const deltaX2 = x3 - x2;
-  const deltaX3 = x0 - x1 + x2 - x3;
-  const deltaY1 = y1 - y2;
-  const deltaY2 = y3 - y2;
-  const deltaY3 = y0 - y1 + y2 - y3;
-  const denominator = deltaX1 * deltaY2 - deltaX2 * deltaY1;
+    coefficients.push([
+      0,
+      0,
+      0,
+      sourceX,
+      sourceY,
+      1,
+      -targetY * sourceX,
+      -targetY * sourceY,
+    ]);
+    results.push(targetY);
+  });
 
-  if (Math.abs(denominator) < 1e-9) {
-    throw new Error("Невозможно построить проекцию для вырожденного четырёхугольника");
-  }
+  const [h11, h12, h13, h21, h22, h23, h31, h32] = solveLinearSystem(
+    coefficients,
+    results,
+  );
 
-  const projectiveX = (deltaX3 * deltaY2 - deltaX2 * deltaY3) / denominator;
-  const projectiveY = (deltaX1 * deltaY3 - deltaX3 * deltaY1) / denominator;
-  const scaleX = x1 - x0 + projectiveX * x1;
-  const shearX = x3 - x0 + projectiveY * x3;
-  const scaleY = y1 - y0 + projectiveX * y1;
-  const shearY = y3 - y0 + projectiveY * y3;
-
-  // CSS matrix3d is column-major. These coefficients embed the 3×3 planar
-  // homography so the perspective divide maps every source corner to its mask.
+  // CSS matrix3d is column-major. h31/h32 occupy the projective row,
+  // producing a perspective divide instead of an affine approximation.
   return [
-    scaleX / sourceWidth,
-    scaleY / sourceWidth,
+    h11,
+    h21,
     0,
-    projectiveX / sourceWidth,
-    shearX / sourceHeight,
-    shearY / sourceHeight,
+    h31,
+    h12,
+    h22,
     0,
-    projectiveY / sourceHeight,
+    h32,
     0,
     0,
     1,
     0,
-    x0,
-    y0,
+    h13,
+    h23,
     0,
     1,
   ];
@@ -144,6 +156,12 @@ function clipPathForQuad(quad) {
   return `polygon(${points.join(",")})`;
 }
 
+function setContentInset(surface, contentInset) {
+  Object.entries(contentInset).forEach(([side, value]) => {
+    surface.style.setProperty(`--timer-content-${side}`, `${value}%`);
+  });
+}
+
 export class PerspectiveLayout {
   constructor(scene, timerRoot) {
     this.scene = scene;
@@ -155,23 +173,27 @@ export class PerspectiveLayout {
 
     timerRoot.querySelectorAll("[data-timer-screen]").forEach((element) => {
       const name = element.dataset.timerScreen;
-      const definition = SCREEN_DEFINITIONS[name];
+      const geometry = SCREEN_GEOMETRY[name];
 
-      if (!definition) {
+      if (!geometry) {
         return;
+      }
+
+      const surface = element.querySelector("[data-timer-surface]");
+      surface.style.width = `${LOCAL_SCREEN_SIZE.width}px`;
+      surface.style.height = `${LOCAL_SCREEN_SIZE.height}px`;
+
+      if (surface) {
+        setContentInset(surface, geometry.contentInset);
       }
 
       this.screens.set(name, {
         element,
-        surface: element.querySelector("[data-timer-surface]"),
-        glowSurface: element.querySelector("[data-timer-glow-surface]"),
+        surface,
         clipElements: [...element.querySelectorAll("[data-timer-clip]")],
-        quad: definition.quad.map((point) => [...point]),
-        maskUrl: definition.maskUrl,
+        quad: quadFromGeometry(geometry),
       });
     });
-
-    this.updateSurfaceSizes();
 
     this.handleViewportChange = () => this.requestRefresh();
     this.resizeObserver = "ResizeObserver" in window
@@ -184,48 +206,16 @@ export class PerspectiveLayout {
 
     this.updateClipPaths();
     this.refresh(true);
-    this.loadMaskGeometry();
-  }
-
-  async loadMaskGeometry() {
-    await Promise.all(
-      [...this.screens.values()].map(async (screen) => {
-        try {
-          screen.quad = await loadMaskQuad(screen.maskUrl);
-        } catch (error) {
-          console.warn("Используется встроенная геометрия timer-маски", error);
-        }
-      }),
-    );
-
-    this.updateClipPaths();
-    this.updateSurfaceSizes();
-    this.refresh(true);
-  }
-
-  updateSurfaceSizes() {
-    this.screens.forEach((screen) => {
-      const { width, height } = surfaceSizeForQuad(screen.quad);
-
-      [screen.surface, screen.glowSurface].forEach((surface) => {
-        if (!surface) {
-          return;
-        }
-
-        surface.style.width = `${width.toFixed(4)}px`;
-        surface.style.height = `${height}px`;
-      });
-    });
   }
 
   updateClipPaths() {
     this.screens.forEach((screen) => {
       const clipPath = clipPathForQuad(screen.quad);
+
       screen.clipElements.forEach((element) => {
         element.style.clipPath = clipPath;
         element.style.webkitClipPath = clipPath;
       });
-      screen.element.dataset.maskSource = screen.maskUrl;
     });
   }
 
@@ -255,15 +245,10 @@ export class PerspectiveLayout {
 
     this.screens.forEach((screen) => {
       const targetQuad = screen.quad.map(([x, y]) => [x * scaleX, y * scaleY]);
-      [screen.surface, screen.glowSurface].forEach((surface) => {
-        if (!surface) {
-          return;
-        }
 
-        surface.style.transform = matrixToCss(
-          homographyMatrix(surface.offsetWidth, surface.offsetHeight, targetQuad),
-        );
-      });
+      screen.surface.style.transform = matrixToCss(
+        homographyMatrix(LOCAL_SCREEN_SIZE.width, LOCAL_SCREEN_SIZE.height, targetQuad),
+      );
     });
   }
 

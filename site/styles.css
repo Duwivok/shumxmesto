@@ -55,7 +55,6 @@ button {
 .backgrounds,
 .background,
 .navigation,
-.navigation-art,
 .timer-system,
 .timer-screen {
   position: absolute;
@@ -64,8 +63,7 @@ button {
   height: 100%;
 }
 
-.background,
-.navigation-art {
+.background {
   display: block;
   object-fit: contain;
   object-position: center;
@@ -95,6 +93,7 @@ button {
 }
 
 .timer-screen {
+  z-index: 2;
   overflow: visible;
 }
 
@@ -111,7 +110,6 @@ button {
   transition: opacity 120ms linear;
 }
 
-.timer-glow-surface,
 .timer-surface {
   position: absolute;
   top: 0;
@@ -122,40 +120,13 @@ button {
   will-change: transform;
 }
 
-.timer-glow-surface {
-  z-index: 1;
-  width: 132px;
-  height: 100px;
-  overflow: visible;
-  opacity: 0;
-  mix-blend-mode: screen;
-  transition: opacity 120ms linear;
-}
-
-.timer-glow-surface::before {
-  position: absolute;
-  inset: -22% -26%;
-  border-radius: 35%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 228, 247, 0.58) 0 14%,
-    rgba(255, 31, 154, 0.42) 30%,
-    rgba(219, 0, 126, 0.2) 52%,
-    transparent 76%
-  );
-  content: "";
-  filter: blur(7px);
-  transform: scale(0.96);
-  animation: timer-glow-pulse 2.8s ease-in-out infinite alternate;
-}
-
 .timer-screen-clip {
   z-index: 2;
   overflow: hidden;
 }
 
 .timer-surface {
-  width: 132px;
+  width: 133.3333px;
   height: 100px;
   overflow: hidden;
   opacity: 0;
@@ -170,34 +141,32 @@ button {
   opacity: 1;
 }
 
-.timer-screen.is-ready .timer-glow-surface {
-  opacity: 1;
-}
-
-.timer-digits,
-.timer-screen-fx {
+.timer-digits {
   position: absolute;
 }
 
 .timer-digits {
   z-index: 1;
-  inset: 0;
+  top: var(--timer-content-top, 8%);
+  right: var(--timer-content-right, 8%);
+  bottom: var(--timer-content-bottom, 8%);
+  left: var(--timer-content-left, 8%);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .timer-digit {
-  position: relative;
+  display: grid;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  place-items: center;
 }
 
 .timer-digit [data-timer-digit] {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   mix-blend-mode: screen;
   filter: saturate(1.08) contrast(1.1) brightness(1.04);
@@ -205,14 +174,39 @@ button {
   -webkit-user-drag: none;
 }
 
-.timer-screen-fx {
+.timer-glow-layer {
+  position: absolute;
   z-index: 3;
+  top: 58.263889%;
+  left: 0;
+  width: 100%;
+  height: 33.333333%;
+  overflow: visible;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms linear;
+}
+
+.timer-glow-layer.is-ready {
+  opacity: 1;
+}
+
+.timer-glow-image,
+.timer-glow-video {
+  position: absolute;
   inset: 0;
-  background:
-    linear-gradient(115deg, rgba(255, 255, 255, 0.12), transparent 25%, transparent 72%, rgba(255, 31, 154, 0.08)),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px);
-  opacity: 0.5;
-  mix-blend-mode: screen;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.timer-glow-layer[data-animation-format="image"] .timer-glow-image,
+.timer-glow-layer[data-animation-format="video"] .timer-glow-video {
+  opacity: 1;
 }
 
 .rsvp-cigarette {
@@ -305,63 +299,146 @@ button {
   pointer-events: none;
 }
 
-.navigation-art {
-  z-index: 0;
-  visibility: hidden;
-  opacity: 0;
-}
-
-.navigation-art.is-active {
-  visibility: visible;
-  opacity: 1;
-}
-
-.navigation-hit-areas {
+.navigation-buttons {
   position: absolute;
   z-index: 1;
   right: 0;
-  bottom: 0;
   left: 0;
-  display: grid;
-  height: 16.6667%;
-  grid-template-columns: 34.6% 29.7% 20.3% 15.4%;
+  bottom: min(6.6667vw, 3.6111vh);
+  bottom: min(6.6667vw, 3.6111dvh);
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 0 min(1.5385vw, 0.8333vh);
+  padding: 0 min(1.5385vw, 0.8333dvh);
   pointer-events: auto;
 }
 
-.nav-hit {
-  min-width: 0;
-  min-height: 0;
+.nav-button {
+  position: relative;
+  z-index: 1;
+  flex: none;
   margin: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
   outline: 0;
   background: transparent;
-  color: transparent;
   cursor: pointer;
+  filter: brightness(0.82) saturate(0.85);
+  transform: translateY(0) scale(1);
+  transform-origin: 50% 78%;
+  transition:
+    transform 420ms 266ms cubic-bezier(0.34, 1.5, 0.64, 1),
+    filter 350ms 266ms linear;
   appearance: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
-.nav-hit:focus-visible {
-  outline: 2px solid #ff1f9a;
-  outline-offset: -4px;
+.nav-button[aria-current="page"] {
+  z-index: 9;
+  filter: drop-shadow(0 6px 18px rgba(255, 46, 147, 0.45));
+  transform: translateY(calc(0px - min(2.5641vw, 1.3889dvh))) scale(1.5);
 }
 
-.app[data-ready="false"] .nav-hit {
+.nav-button-motion,
+.nav-button-sway {
+  display: block;
+  transform-origin: 50% 72%;
+}
+
+.nav-button-motion {
+  will-change: transform, filter, clip-path;
+}
+
+.nav-button-motion.is-crumpling {
+  animation: nav-crush-3a 700ms var(--crumple-delay, 0ms) cubic-bezier(0.24, 0.86, 0.28, 1) both;
+}
+
+.nav-button-sway {
+  animation: nav-sway-3a 6.4s ease-in-out infinite alternate;
+  transform-origin: 50% 85%;
+}
+
+.nav-button-sway--reverse {
+  animation-name: nav-sway-3a-reverse;
+  animation-duration: 7.8s;
+  animation-delay: 450ms;
+}
+
+.nav-button-art {
+  display: block;
+  width: auto;
+  height: min(15.3846vw, 8.3333vh);
+  height: min(15.3846vw, 8.3333dvh);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.nav-button:focus-visible {
+  outline: 2px solid #ff1f9a;
+  outline-offset: 4px;
+}
+
+.app[data-ready="false"] .nav-button {
   pointer-events: none;
 }
 
-@keyframes timer-glow-pulse {
+@keyframes nav-crush-3a {
+  0% {
+    clip-path: polygon(0% 0%, 50% 0%, 100% 0%, 100% 50%, 100% 100%, 50% 100%, 0% 100%, 0% 50%);
+    filter: brightness(1) contrast(1);
+    transform: scale(1) rotate(0deg);
+  }
+
+  30% {
+    clip-path: polygon(9% 11%, 54% 3%, 94% 13%, 89% 51%, 96% 90%, 46% 98%, 6% 88%, 12% 47%);
+    filter: brightness(0.55) contrast(1.4) saturate(0.85);
+    transform: scale(0.5) rotate(-9deg) translateY(8px);
+  }
+
+  46% {
+    clip-path: polygon(5% 6%, 48% 6%, 97% 4%, 95% 55%, 92% 96%, 52% 93%, 3% 95%, 6% 44%);
+    filter: brightness(0.7) contrast(1.25);
+    transform: scale(0.58) rotate(7deg) translateY(4px);
+  }
+
+  70% {
+    clip-path: polygon(1% 1%, 50% 0%, 99% 1%, 100% 50%, 99% 99%, 50% 100%, 1% 99%, 0% 50%);
+    filter: brightness(1.1) contrast(1.02);
+    transform: scale(1.07) rotate(-2.5deg);
+  }
+
+  86% {
+    transform: scale(0.97) rotate(1.2deg);
+  }
+
+  100% {
+    clip-path: polygon(0% 0%, 50% 0%, 100% 0%, 100% 50%, 100% 100%, 50% 100%, 0% 100%, 0% 50%);
+    filter: brightness(1) contrast(1);
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes nav-sway-3a {
   from {
-    opacity: 0.7;
-    transform: scale(0.94);
+    transform: rotate(-0.8deg) translateY(0);
   }
 
   to {
-    opacity: 1;
-    transform: scale(1.02);
+    transform: rotate(0.9deg) translateY(-1.5px);
+  }
+}
+
+@keyframes nav-sway-3a-reverse {
+  from {
+    transform: rotate(1deg) translateY(-1px);
+  }
+
+  to {
+    transform: rotate(-0.7deg) translateY(1.5px);
   }
 }
 
@@ -373,12 +450,14 @@ button {
   }
 
   .timer-screen-base,
-  .timer-glow-surface,
-  .timer-surface {
+  .timer-surface,
+  .timer-glow-layer,
+  .nav-button {
     transition: none;
   }
 
-  .timer-glow-surface::before {
-    animation: none;
+  .nav-button-motion,
+  .nav-button-sway {
+    animation: none !important;
   }
 }

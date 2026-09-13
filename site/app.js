@@ -1,11 +1,15 @@
-import { initCountdownTimer } from "./timer.js?v=20260913";
+import { initCountdownTimer } from "./timer.js?v=20260913c";
 
 const PAGES = new Set(["home", "lineup", "bar", "rsvp"]);
 
 const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
-const navigationArtwork = [...document.querySelectorAll("[data-navigation]")];
 const navigationButtons = [...document.querySelectorAll("[data-target]")];
+const navigationImages = [...document.querySelectorAll(".nav-button-art")];
+const navigationMotion = navigationButtons.map((button) => button.querySelector(".nav-button-motion"));
+const timerGlow = document.querySelector("[data-timer-glow]");
+const timerGlowImage = document.querySelector("[data-timer-glow-image]");
+const timerGlowVideo = document.querySelector("[data-timer-glow-video]");
 const cigaretteButton = document.querySelector("[data-cigarette]");
 const cigaretteIdleImage = document.querySelector("[data-cigarette-idle]");
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
@@ -14,6 +18,7 @@ const countdownTimer = initCountdownTimer(document.querySelector("[data-countdow
 let cigarettePlaybackId = 0;
 let cigaretteResetTimer = 0;
 let cigaretteIdleLoopTimer = 0;
+let navigationCrumpleTimer = 0;
 let cigaretteHasBeenPressed = false;
 let cigaretteIdleIntroHasStarted = false;
 
@@ -191,10 +196,6 @@ function showPage(page, { updateUrl = true } = {}) {
     background.classList.toggle("is-active", background.dataset.background === nextPage);
   });
 
-  navigationArtwork.forEach((artwork) => {
-    artwork.classList.toggle("is-active", artwork.dataset.navigation === nextPage);
-  });
-
   navigationButtons.forEach((button) => {
     if (button.dataset.target === nextPage) {
       button.setAttribute("aria-current", "page");
@@ -225,8 +226,90 @@ function imageReady(image) {
   });
 }
 
-navigationButtons.forEach((button) => {
-  button.addEventListener("click", () => showPage(button.dataset.target));
+function showTimerGlowImage() {
+  timerGlow.classList.remove("is-ready");
+  timerGlow.dataset.animationFormat = "image";
+  timerGlowVideo.onloadeddata = null;
+  timerGlowVideo.onerror = null;
+  timerGlowVideo.pause();
+  timerGlowVideo.removeAttribute("src");
+  timerGlowVideo.load();
+
+  if (!timerGlowImage.src) {
+    timerGlowImage.src = timerGlowImage.dataset.src;
+  }
+
+  imageReady(timerGlowImage)
+    .then(() => timerGlow.classList.add("is-ready"))
+    .catch((error) => console.error(error));
+}
+
+function showTimerGlowVideo() {
+  timerGlow.dataset.animationFormat = "video";
+  timerGlowVideo.onloadeddata = () => {
+    timerGlow.classList.add("is-ready");
+    timerGlowVideo.onloadeddata = null;
+  };
+  timerGlowVideo.onerror = showTimerGlowImage;
+  timerGlowVideo.src = timerGlowVideo.dataset.src;
+  timerGlowVideo.preload = "auto";
+  timerGlowVideo.load();
+
+  const playRequest = timerGlowVideo.play();
+
+  if (playRequest) {
+    playRequest.catch((error) => {
+      console.warn("Could not autoplay the timer glow video; using image fallback", error);
+      showTimerGlowImage();
+    });
+  }
+}
+
+function initTimerGlow() {
+  if (!timerGlow || !timerGlowImage || !timerGlowVideo) {
+    return;
+  }
+
+  if (isAppleMobileDevice()) {
+    const preload = document.createElement("link");
+    preload.rel = "preload";
+    preload.as = "image";
+    preload.type = "image/webp";
+    preload.href = timerGlowImage.dataset.src;
+    document.head.append(preload);
+    showTimerGlowImage();
+    return;
+  }
+
+  showTimerGlowVideo();
+}
+
+function crumpleNavigation(tappedIndex) {
+  window.clearTimeout(navigationCrumpleTimer);
+
+  navigationMotion.forEach((motion, index) => {
+    motion.classList.remove("is-crumpling");
+    motion.style.setProperty("--crumple-delay", `${Math.abs(index - tappedIndex) * 70}ms`);
+  });
+
+  void app.offsetWidth;
+
+  navigationMotion.forEach((motion) => motion.classList.add("is-crumpling"));
+
+  navigationCrumpleTimer = window.setTimeout(() => {
+    navigationMotion.forEach((motion) => motion.classList.remove("is-crumpling"));
+  }, 960);
+}
+
+navigationMotion.forEach((motion) => {
+  motion.addEventListener("animationend", () => motion.classList.remove("is-crumpling"));
+});
+
+navigationButtons.forEach((button, index) => {
+  button.addEventListener("click", () => {
+    crumpleNavigation(index);
+    showPage(button.dataset.target);
+  });
 });
 
 cigaretteButton.addEventListener("click", restartCigaretteAnimation);
@@ -234,9 +317,10 @@ cigaretteVideo.addEventListener("ended", finishCigaretteAnimation);
 
 window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: false }));
 
+initTimerGlow();
 showPage(pageFromHash(), { updateUrl: false });
 
-const preloadedImages = [...backgrounds, ...navigationArtwork];
+const preloadedImages = [...backgrounds, ...navigationImages];
 
 Promise.all(preloadedImages.map(imageReady))
   .catch((error) => console.error(error))
