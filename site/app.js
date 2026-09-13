@@ -13,9 +13,12 @@ const cigaretteVideo = document.querySelector("[data-cigarette-video]");
 const countdownTimer = initCountdownTimer(document.querySelector("[data-countdown]"));
 let cigarettePlaybackId = 0;
 let cigaretteResetTimer = 0;
+let cigaretteIdleLoopTimer = 0;
 let cigaretteHasBeenPressed = false;
+let cigaretteIdleIntroHasStarted = false;
 
 const CIGARETTE_ANIMATION_DURATION = 4000;
+const CIGARETTE_IDLE_INTRO_DURATION = 2300;
 
 function isAppleMobileDevice() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent)
@@ -46,6 +49,8 @@ function finishCigaretteAnimation() {
 }
 
 function stopCigaretteIdle({ discard = false } = {}) {
+  window.clearTimeout(cigaretteIdleLoopTimer);
+  cigaretteIdleLoopTimer = 0;
   cigaretteIdleImage.onload = null;
   cigaretteIdleImage.onerror = null;
   cigaretteButton.classList.remove("is-idle");
@@ -55,12 +60,8 @@ function stopCigaretteIdle({ discard = false } = {}) {
   }
 }
 
-function startCigaretteIdle() {
-  if (
-    cigaretteHasBeenPressed
-    || cigaretteButton.classList.contains("is-playing")
-    || cigaretteIdleImage.hasAttribute("src")
-  ) {
+function startCigaretteIdleLoop() {
+  if (cigaretteHasBeenPressed || app.dataset.page !== "rsvp") {
     return;
   }
 
@@ -72,7 +73,45 @@ function startCigaretteIdle() {
     }
   };
   cigaretteIdleImage.onerror = () => stopCigaretteIdle({ discard: true });
-  cigaretteIdleImage.src = cigaretteIdleImage.dataset.src;
+  cigaretteIdleImage.src = cigaretteIdleImage.dataset.loopSrc;
+}
+
+function startCigaretteIdle() {
+  if (
+    cigaretteHasBeenPressed
+    || cigaretteButton.classList.contains("is-playing")
+    || cigaretteIdleImage.hasAttribute("src")
+  ) {
+    return;
+  }
+
+  const showIntro = !cigaretteIdleIntroHasStarted;
+  cigaretteIdleIntroHasStarted = true;
+
+  cigaretteIdleImage.onload = () => {
+    cigaretteIdleImage.onload = null;
+
+    if (!cigaretteHasBeenPressed && app.dataset.page === "rsvp") {
+      cigaretteButton.classList.add("is-idle");
+
+      if (showIntro) {
+        cigaretteIdleLoopTimer = window.setTimeout(() => {
+          cigaretteIdleLoopTimer = 0;
+          startCigaretteIdleLoop();
+        }, CIGARETTE_IDLE_INTRO_DURATION);
+      }
+    }
+  };
+  cigaretteIdleImage.onerror = () => {
+    if (showIntro) {
+      startCigaretteIdleLoop();
+    } else {
+      stopCigaretteIdle({ discard: true });
+    }
+  };
+  cigaretteIdleImage.src = showIntro
+    ? cigaretteIdleImage.dataset.introSrc
+    : cigaretteIdleImage.dataset.loopSrc;
 }
 
 function restartCigaretteAnimation() {
