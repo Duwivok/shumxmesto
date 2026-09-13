@@ -7,11 +7,13 @@ const backgrounds = [...document.querySelectorAll("[data-background]")];
 const navigationArtwork = [...document.querySelectorAll("[data-navigation]")];
 const navigationButtons = [...document.querySelectorAll("[data-target]")];
 const cigaretteButton = document.querySelector("[data-cigarette]");
+const cigaretteIdleImage = document.querySelector("[data-cigarette-idle]");
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
 const cigaretteVideo = document.querySelector("[data-cigarette-video]");
 const countdownTimer = initCountdownTimer(document.querySelector("[data-countdown]"));
 let cigarettePlaybackId = 0;
 let cigaretteResetTimer = 0;
+let cigaretteHasBeenPressed = false;
 
 const CIGARETTE_ANIMATION_DURATION = 4000;
 
@@ -43,9 +45,41 @@ function finishCigaretteAnimation() {
   cigaretteButton.classList.add("is-playing");
 }
 
+function stopCigaretteIdle({ discard = false } = {}) {
+  cigaretteIdleImage.onload = null;
+  cigaretteIdleImage.onerror = null;
+  cigaretteButton.classList.remove("is-idle");
+
+  if (discard) {
+    cigaretteIdleImage.removeAttribute("src");
+  }
+}
+
+function startCigaretteIdle() {
+  if (
+    cigaretteHasBeenPressed
+    || cigaretteButton.classList.contains("is-playing")
+    || cigaretteIdleImage.hasAttribute("src")
+  ) {
+    return;
+  }
+
+  cigaretteIdleImage.onload = () => {
+    cigaretteIdleImage.onload = null;
+
+    if (!cigaretteHasBeenPressed && app.dataset.page === "rsvp") {
+      cigaretteButton.classList.add("is-idle");
+    }
+  };
+  cigaretteIdleImage.onerror = () => stopCigaretteIdle({ discard: true });
+  cigaretteIdleImage.src = cigaretteIdleImage.dataset.src;
+}
+
 function restartCigaretteAnimation() {
   const playbackId = ++cigarettePlaybackId;
 
+  cigaretteHasBeenPressed = true;
+  stopCigaretteIdle({ discard: true });
   window.clearTimeout(cigaretteResetTimer);
 
   if (cigaretteAnimationFormat === "image") {
@@ -107,6 +141,12 @@ function showPage(page, { updateUrl = true } = {}) {
 
   app.dataset.page = nextPage;
   countdownTimer?.setActive(nextPage === "home");
+
+  if (nextPage === "rsvp") {
+    startCigaretteIdle();
+  } else if (!cigaretteHasBeenPressed) {
+    stopCigaretteIdle({ discard: true });
+  }
 
   backgrounds.forEach((background) => {
     background.classList.toggle("is-active", background.dataset.background === nextPage);
