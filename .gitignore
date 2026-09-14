@@ -14,3 +14,7 @@ id_rsa.*
 id_ed25519
 id_ed25519.*
 .runtime/
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

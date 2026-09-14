@@ -1,0 +1,34 @@
+[Unit]
+Description=SHUM anonymous RSVP service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shum
+Group=shum
+WorkingDirectory=/opt/shum
+EnvironmentFile=/etc/shum.env
+ExecStart=/usr/bin/node server/index.js
+Restart=on-failure
+RestartSec=3
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/shum
+
+# The application writes no request logs. The journal contains startup/service
+# events only; keep operating-system and provider logging under review.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

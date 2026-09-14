@@ -1,0 +1,14 @@
+{
+  "name": "shum-mini-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test",
+    "finalize-event": "node server/scripts/finalize-event.js"
+  }
+}

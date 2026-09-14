@@ -1,11 +1,15 @@
 import { initCountdownTimer } from "./timer.js?v=20260914cold1";
 import { initTimerScreenBackground } from "./timer-background.js?v=20260913background1";
 import { initNavigation } from "./navigation.js?v=20260914focus1";
+import { RSVP_CONFIG } from "./rsvp-config.js?v=20260914rsvp1";
+import { createRsvpController } from "./rsvp.js?v=20260914rsvp1";
 
 const PAGES = new Set(["home", "lineup", "bar", "rsvp", "geo"]);
 
 const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
+const barImages = [...document.querySelectorAll("[data-bar-image]")];
+const barVideos = [...document.querySelectorAll("[data-bar-video]")];
 const navigationUnderlay = document.querySelector("[data-navigation-underlay]");
 const navigation = initNavigation(document.querySelector("[data-navigation]"), (page) => showPage(page));
 const timerGlow = document.querySelector("[data-timer-glow]");
@@ -16,6 +20,7 @@ const cigarettePoster = document.querySelector("[data-cigarette-poster]");
 const cigaretteIdleImage = document.querySelector("[data-cigarette-idle]");
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
 const cigaretteVideo = document.querySelector("[data-cigarette-video]");
+const cigaretteDefaultLabel = cigaretteButton.getAttribute("aria-label");
 const timerBackgroundVideo = document.querySelector("[data-timer-background-video]");
 let countdownTimer = null;
 const timerScreenBackground = initTimerScreenBackground(timerBackgroundVideo);
@@ -27,17 +32,28 @@ let cigaretteIdleLoopTimer = 0;
 let cigaretteHasBeenPressed = false;
 let cigaretteIdleIntroHasStarted = false;
 let cigaretteAnimationReadyPromise = null;
+let barImagesReadyPromise = null;
+let barVideosPrepared = false;
 
 const CIGARETTE_ANIMATION_DURATION = 4000;
 const CIGARETTE_IDLE_INTRO_DURATION = 2300;
 
-function isAppleMobileDevice() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent)
-    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+function supportsWebmVideo(video) {
+  return typeof video?.canPlayType === "function"
+    && video.canPlayType('video/webm; codecs="vp9"') !== "";
 }
 
-const cigaretteAnimationFormat = isAppleMobileDevice() ? "image" : "video";
+let cigaretteAnimationFormat = supportsWebmVideo(cigaretteVideo) ? "video" : "image";
 cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
+
+function useCigaretteImageFallback() {
+  cigaretteAnimationFormat = "image";
+  cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
+  cigaretteAnimationReadyPromise = null;
+  cigaretteVideo.pause();
+  cigaretteVideo.removeAttribute("src");
+  cigaretteVideo.load();
+}
 
 function waitForVideoData(video) {
   if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
@@ -116,6 +132,17 @@ function finishCigaretteAnimation() {
   cigaretteImage.onload = null;
   cigaretteImage.onerror = null;
   cigaretteButton.classList.add("is-playing");
+}
+
+function waitForCigaretteAnimation() {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, CIGARETTE_ANIMATION_DURATION);
+  });
+}
+
+async function playCigaretteAnimationCycle() {
+  await restartCigaretteAnimation();
+  await waitForCigaretteAnimation();
 }
 
 function stopCigaretteIdle({ discard = false } = {}) {
@@ -226,9 +253,9 @@ async function restartCigaretteAnimation() {
 
   try {
     await prepareCigaretteAnimation();
-  } catch (error) {
-    console.error(error);
-    return;
+  } catch {
+    useCigaretteImageFallback();
+    return restartCigaretteAnimation();
   }
 
   if (playbackId !== cigarettePlaybackId || app.dataset.page !== "rsvp") {
@@ -304,6 +331,77 @@ function prepareRsvpAssets() {
   startCigaretteIdle();
 }
 
+function prepareBarImages() {
+  if (barImagesReadyPromise) {
+    return barImagesReadyPromise;
+  }
+
+  const preparation = Promise.all(
+    barImages.map((image) => loadDecodedImage(
+      image,
+      image.dataset.src,
+      { highPriority: image.dataset.barImage === "back" },
+    )),
+  );
+
+  barImagesReadyPromise = preparation.catch((error) => {
+    barImagesReadyPromise = null;
+    throw error;
+  });
+  return barImagesReadyPromise;
+}
+
+function prepareBarVideos() {
+  if (barVideosPrepared || !barVideos.length) {
+    return;
+  }
+
+  barVideosPrepared = true;
+  barVideos.forEach((video) => {
+    const cocktail = video.closest("[data-bar-cocktail]");
+
+    if (!supportsWebmVideo(video)) {
+      return;
+    }
+
+    video.addEventListener("playing", () => cocktail?.classList.add("is-playing"));
+    video.addEventListener("error", () => {
+      cocktail?.classList.remove("is-playing");
+      console.warn(`Could not load the bar animation: ${video.dataset.src}`);
+    });
+    video.src = video.dataset.src;
+    video.preload = "auto";
+    video.load();
+  });
+}
+
+function syncBarPlayback() {
+  if (!barVideos.length) {
+    return;
+  }
+
+  if (app.dataset.page !== "bar" || document.hidden) {
+    barVideos.forEach((video) => video.pause());
+    return;
+  }
+
+  prepareBarVideos();
+  barVideos.forEach((video) => {
+    if (!video.src) {
+      return;
+    }
+
+    const playRequest = video.play();
+    playRequest?.catch((error) => {
+      if (error.name === "AbortError" || app.dataset.page !== "bar" || document.hidden) {
+        return;
+      }
+      video.closest("[data-bar-cocktail]")?.classList.remove("is-playing");
+      console.warn("Could not autoplay a bar animation; keeping its poster", error);
+    });
+  });
+}
+
 function commitPage(nextPage) {
   app.dataset.page = nextPage;
   backgrounds.forEach((background) => {
@@ -316,6 +414,7 @@ function commitPage(nextPage) {
   countdownTimer?.setActive(nextPage === "home");
   timerScreenBackground?.setActive(nextPage === "home");
   syncTimerGlowPlayback();
+  syncBarPlayback();
 
   if (nextPage === "rsvp") {
     prepareRsvpAssets();
@@ -331,7 +430,9 @@ async function showPage(page, { updateUrl = true } = {}) {
   const nextPage = PAGES.has(page) ? page : "home";
   const requestId = ++pageRequestId;
   const background = backgrounds.find((item) => item.dataset.background === nextPage);
-  const pageAssets = [loadDecodedImage(background, background.dataset.src, { highPriority: true })];
+  const pageAssets = nextPage === "bar"
+    ? [prepareBarImages()]
+    : [loadDecodedImage(background, background.dataset.src, { highPriority: true })];
 
   if (navigationUnderlay?.dataset.navigationUnderlay === nextPage) {
     pageAssets.push(
@@ -434,7 +535,7 @@ function initTimerGlow() {
     return;
   }
 
-  if (isAppleMobileDevice()) {
+  if (!supportsWebmVideo(timerGlowVideo)) {
     showTimerGlowImage();
     return;
   }
@@ -442,11 +543,41 @@ function initTimerGlow() {
   showTimerGlowVideo();
 }
 
-cigaretteButton.addEventListener("click", restartCigaretteAnimation);
+const rsvpController = createRsvpController({
+  ...RSVP_CONFIG,
+  getStorage: () => window.localStorage,
+  fetchRequest: (...argumentsList) => window.fetch(...argumentsList),
+  cryptoProvider: window.crypto,
+  playAnimation: playCigaretteAnimationCycle,
+  openChannel: (url) => window.location.assign(url),
+});
+
+cigaretteButton.addEventListener("click", async () => {
+  if (rsvpController.isInFlight()) {
+    return;
+  }
+
+  cigaretteButton.setAttribute("aria-label", cigaretteDefaultLabel);
+  cigaretteButton.setAttribute("aria-busy", "true");
+  const result = await rsvpController.activate();
+  cigaretteButton.removeAttribute("aria-busy");
+
+  if (!result.ok) {
+    cigaretteButton.setAttribute(
+      "aria-label",
+      result.reason === "channel-not-configured"
+        ? "Ссылка на Telegram-канал пока не настроена"
+        : "Не удалось подтвердить участие. Нажмите ещё раз, чтобы повторить",
+    );
+  } else {
+    cigaretteButton.setAttribute("aria-label", cigaretteDefaultLabel);
+  }
+});
 cigaretteVideo.addEventListener("ended", finishCigaretteAnimation);
 
 window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: false }));
 window.addEventListener("hashchange", () => showPage(pageFromHash(), { updateUrl: false }));
 document.addEventListener("visibilitychange", syncTimerGlowPlayback);
+document.addEventListener("visibilitychange", syncBarPlayback);
 
 showPage(pageFromHash(), { updateUrl: false });

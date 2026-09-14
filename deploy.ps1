@@ -10,7 +10,6 @@ Set-StrictMode -Version Latest
 
 $ExpectedBranch = "main"
 $ExpectedOrigin = "https://github.com/Duwivok/shumxmesto.git"
-$PagesUrl = "https://duwivok.github.io/shumxmesto/"
 $RepositoryPath = $PSScriptRoot.Replace('\', '/')
 $GitBaseArguments = @("-c", "safe.directory=$RepositoryPath")
 
@@ -74,6 +73,12 @@ try {
     }
 
     Invoke-GitCommand -ArgumentList @("diff", "--check")
+
+    & cmd /c npm test
+    if ($LASTEXITCODE -ne 0) {
+        throw "Project tests failed."
+    }
+
     Invoke-GitCommand -ArgumentList @("add", "--all")
     Invoke-GitCommand -ArgumentList @("diff", "--cached", "--check")
 
@@ -123,8 +128,8 @@ try {
         throw "Unable to determine the pushed commit SHA."
     }
 
-    Write-Host "GitHub push completed: $pushedCommit"
-    Write-Host "GitHub Pages will deploy site/ automatically: $PagesUrl"
+    Write-Host "GitHub source push completed: $pushedCommit"
+    Write-Host "GitHub Pages is disabled. Deploy /opt/shum to Timeweb separately."
 }
 finally {
     Pop-Location

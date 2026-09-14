@@ -11,7 +11,7 @@
         const sources = {
           home: "backgrounds/home.png?v=a7f5261173",
           lineup: "backgrounds/lineup.png?v=7d078d4963",
-          bar: "backgrounds/bar.png?v=57f5aaefd0",
+          bar: "backgrounds/bar/back.png?v=20260914bar1",
           rsvp: "backgrounds/rsvp.png?v=4099bfd00d",
           geo: "backgrounds/geo.png?v=af0cd09076",
         };
@@ -35,7 +35,7 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260914undernav1" />
+    <link rel="stylesheet" href="styles.css?v=20260914bar1" />
   </head>
   <body>
     <main class="app" data-app data-page="loading">
@@ -43,7 +43,81 @@
         <div class="backgrounds" aria-hidden="true">
           <img class="background" data-background="home" data-src="backgrounds/home.png?v=a7f5261173" width="780" height="1440" decoding="async" alt="" />
           <img class="background" data-background="lineup" data-src="backgrounds/lineup.png?v=7d078d4963" width="780" height="1440" decoding="async" alt="" />
-          <img class="background" data-background="bar" data-src="backgrounds/bar.png?v=57f5aaefd0" width="780" height="1772" decoding="async" alt="" />
+          <div class="background bar-background" data-background="bar" data-bar-background>
+            <img
+              class="bar-layer bar-back"
+              data-bar-image="back"
+              data-src="backgrounds/bar/back.png?v=20260914bar1"
+              width="780"
+              height="1772"
+              decoding="async"
+              alt=""
+              draggable="false"
+            />
+
+            <div class="bar-cocktail bar-cocktail--martine" data-bar-cocktail>
+              <img
+                class="bar-layer bar-cocktail-poster"
+                data-bar-image="cocktail-poster"
+                data-src="backgrounds/bar/coctail.png?v=20260914bar1"
+                width="780"
+                height="1772"
+                decoding="async"
+                alt=""
+                draggable="false"
+              />
+              <video
+                class="bar-cocktail-video"
+                data-bar-video
+                data-src="backgrounds/bar/cocktail-pingpong.webm?v=20260914pingpong1"
+                preload="none"
+                autoplay
+                loop
+                muted
+                playsinline
+                webkit-playsinline
+                disablepictureinpicture
+                aria-hidden="true"
+              ></video>
+            </div>
+
+            <div class="bar-cocktail bar-cocktail--nastoika" data-bar-cocktail>
+              <img
+                class="bar-layer bar-cocktail-poster"
+                data-bar-image="nastoika-poster"
+                data-src="backgrounds/bar/nastoika.png?v=20260914bar1"
+                width="780"
+                height="1772"
+                decoding="async"
+                alt=""
+                draggable="false"
+              />
+              <video
+                class="bar-cocktail-video"
+                data-bar-video
+                data-src="backgrounds/bar/nastoika-pingpong.webm?v=20260914pingpong1"
+                preload="none"
+                autoplay
+                loop
+                muted
+                playsinline
+                webkit-playsinline
+                disablepictureinpicture
+                aria-hidden="true"
+              ></video>
+            </div>
+
+            <img
+              class="bar-layer bar-front"
+              data-bar-image="front"
+              data-src="backgrounds/bar/front.png?v=20260914bar1"
+              width="780"
+              height="1772"
+              decoding="async"
+              alt=""
+              draggable="false"
+            />
+          </div>
           <img class="background" data-background="rsvp" data-src="backgrounds/rsvp.png?v=4099bfd00d" width="780" height="1440" decoding="async" alt="" />
           <img class="background" data-background="geo" data-src="backgrounds/geo.png?v=af0cd09076" width="780" height="1440" decoding="async" alt="" />
         </div>
@@ -267,6 +341,6 @@
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260914undernav1"></script>
+    <script type="module" src="app.js?v=20260914bar1"></script>
   </body>
 </html>

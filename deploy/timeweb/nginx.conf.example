@@ -1,0 +1,70 @@
+# Replace YOUR_DOMAIN in server_name and certificate paths.
+# This configuration intentionally does not use a CDN or IP-based rate limit.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name YOUR_DOMAIN;
+    access_log off;
+    error_log /dev/null emerg;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name YOUR_DOMAIN;
+
+    ssl_certificate /etc/letsencrypt/live/YOUR_DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN/privkey.pem;
+
+    root /opt/shum/site;
+    index index.html;
+    # Request logs are disabled. Critical Nginx request errors are also not
+    # persisted; infrastructure outside this VM must be checked separately.
+    access_log off;
+    error_log /dev/null emerg;
+
+    add_header Referrer-Policy "no-referrer" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    location = /api/rsvp {
+        client_max_body_size 256;
+        error_page 413 = @rsvp_body_too_large;
+        proxy_pass http://127.0.0.1:3000/api/rsvp;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header Origin $http_origin;
+
+        # Do not forward visitor network/profile headers to the application.
+        proxy_set_header Cookie "";
+        proxy_set_header Referer "";
+        proxy_set_header User-Agent "";
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header X-Real-IP "";
+        proxy_hide_header Set-Cookie;
+
+        access_log off;
+        error_log /dev/null emerg;
+    }
+
+    location @rsvp_body_too_large {
+        internal;
+        default_type application/json;
+        return 413 '{"ok":false}';
+    }
+
+    location / {
+        try_files $uri =404;
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+}
