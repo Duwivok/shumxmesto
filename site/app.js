@@ -5,12 +5,6 @@ import { RSVP_CONFIG } from "./rsvp-config.js?v=20260914preview1";
 import { createRsvpController } from "./rsvp.js?v=20260914preview1";
 
 const PAGES = new Set(["home", "lineup", "bar", "rsvp", "geo"]);
-const requestedGeoMode = new URLSearchParams(window.location.search).get("geo");
-const geoHiddenOverride = requestedGeoMode === "hidden"
-  ? true
-  : requestedGeoMode === "shown"
-    ? false
-    : null;
 
 const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
@@ -452,21 +446,19 @@ function syncGeoPlayback() {
 
 async function refreshGeoState() {
   const requestId = ++geoStateRequestId;
-  let hidden = geoHiddenOverride ?? true;
-  if (geoHiddenOverride === null) {
-    try {
-      const response = await fetch("/api/geo-state", {
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      });
-      const result = await response.json();
-      if (!response.ok || typeof result.hidden !== "boolean") {
-        throw new Error("Invalid geo state response");
-      }
-      hidden = result.hidden;
-    } catch (error) {
-      console.warn("Could not refresh the geo state; keeping the section hidden", error);
+  let hidden = true;
+  try {
+    const response = await fetch("/api/geo-state", {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    });
+    const result = await response.json();
+    if (!response.ok || typeof result.hidden !== "boolean") {
+      throw new Error("Invalid geo state response");
     }
+    hidden = result.hidden;
+  } catch (error) {
+    console.warn("Could not refresh the geo state; keeping the section hidden", error);
   }
 
   const neededImages = hidden
