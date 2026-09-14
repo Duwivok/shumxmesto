@@ -18,3 +18,6 @@ data/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+# Keep the full-resolution Geo source local; the site uses geo-noise.webm.
+site/backgrounds/geo/шум no backgr5.webm

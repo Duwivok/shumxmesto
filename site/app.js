@@ -10,6 +10,11 @@ const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
 const barImages = [...document.querySelectorAll("[data-bar-image]")];
 const barVideos = [...document.querySelectorAll("[data-bar-video]")];
+const geoLockOverlay = document.querySelector("[data-geo-lock-overlay]");
+const geoLockImages = [...document.querySelectorAll("[data-geo-lock-image]")];
+const geoLockAnimation = document.querySelector("[data-geo-lock-animation]");
+const geoLockVideo = document.querySelector("[data-geo-lock-video]");
+const geoEyeToggle = document.querySelector("[data-geo-eye-toggle]");
 const navigationUnderlay = document.querySelector("[data-navigation-underlay]");
 const navigation = initNavigation(document.querySelector("[data-navigation]"), (page) => showPage(page));
 const timerGlow = document.querySelector("[data-timer-glow]");
@@ -34,6 +39,8 @@ let cigaretteIdleIntroHasStarted = false;
 let cigaretteAnimationReadyPromise = null;
 let barImagesReadyPromise = null;
 let barVideosPrepared = false;
+let geoLockAssetsPromise = null;
+let geoLockVideoPrepared = false;
 
 const CIGARETTE_ANIMATION_DURATION = 4000;
 const CIGARETTE_IDLE_INTRO_DURATION = 2300;
@@ -402,6 +409,46 @@ function syncBarPlayback() {
   });
 }
 
+function prepareGeoLockAssets() {
+  if (!geoLockAssetsPromise) {
+    geoLockAssetsPromise = Promise.all(
+      geoLockImages.map((image) => loadDecodedImage(
+        image,
+        image.dataset.src,
+        { highPriority: image.classList.contains("geo-lock-back") },
+      )),
+    ).catch((error) => {
+      geoLockAssetsPromise = null;
+      throw error;
+    });
+  }
+  if (!geoLockVideoPrepared && supportsWebmVideo(geoLockVideo)) {
+    geoLockVideoPrepared = true;
+    geoLockVideo.addEventListener("playing", () => geoLockAnimation.classList.add("is-playing"));
+    geoLockVideo.addEventListener("error", () => geoLockAnimation.classList.remove("is-playing"));
+    geoLockVideo.src = geoLockVideo.dataset.src;
+    geoLockVideo.preload = "auto";
+    geoLockVideo.load();
+  }
+  return geoLockAssetsPromise;
+}
+
+function syncGeoLockPlayback() {
+  const active = app.dataset.page === "geo"
+    && app.dataset.geoLocked === "true"
+    && !document.hidden;
+  if (!active) {
+    geoLockVideo?.pause();
+    return;
+  }
+  const playRequest = geoLockVideo?.play();
+  playRequest?.catch((error) => {
+    if (error.name !== "AbortError") {
+      geoLockAnimation?.classList.remove("is-playing");
+    }
+  });
+}
+
 function commitPage(nextPage) {
   app.dataset.page = nextPage;
   backgrounds.forEach((background) => {
@@ -415,6 +462,7 @@ function commitPage(nextPage) {
   timerScreenBackground?.setActive(nextPage === "home");
   syncTimerGlowPlayback();
   syncBarPlayback();
+  syncGeoLockPlayback();
 
   if (nextPage === "rsvp") {
     prepareRsvpAssets();
@@ -582,5 +630,26 @@ window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: 
 window.addEventListener("hashchange", () => showPage(pageFromHash(), { updateUrl: false }));
 document.addEventListener("visibilitychange", syncTimerGlowPlayback);
 document.addEventListener("visibilitychange", syncBarPlayback);
+document.addEventListener("visibilitychange", syncGeoLockPlayback);
+
+geoEyeToggle.addEventListener("click", async () => {
+  const locked = app.dataset.geoLocked !== "true";
+  if (locked) {
+    try {
+      await prepareGeoLockAssets();
+    } catch (error) {
+      console.error("Could not load the locked Geo preview", error);
+      return;
+    }
+  }
+  app.dataset.geoLocked = String(locked);
+  geoLockOverlay.setAttribute("aria-hidden", String(!locked));
+  geoEyeToggle.setAttribute("aria-pressed", String(locked));
+  geoEyeToggle.setAttribute(
+    "aria-label",
+    locked ? "Показать открытую версию Гео" : "Показать закрытую версию Гео",
+  );
+  syncGeoLockPlayback();
+});
 
 showPage(pageFromHash(), { updateUrl: false });

@@ -35,7 +35,7 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260914bar1" />
+    <link rel="stylesheet" href="styles.css?v=20260915geoeye1" />
   </head>
   <body>
     <main class="app" data-app data-page="loading">
@@ -121,6 +121,24 @@
           <img class="background" data-background="rsvp" data-src="backgrounds/rsvp.png?v=4099bfd00d" width="780" height="1440" decoding="async" alt="" />
           <img class="background" data-background="geo" data-src="backgrounds/geo.png?v=af0cd09076" width="780" height="1440" decoding="async" alt="" />
         </div>
+
+        <div class="geo-lock-overlay" data-geo-lock-overlay aria-hidden="true">
+          <img class="geo-lock-layer geo-lock-back" data-geo-lock-image data-src="backgrounds/geo/back-geo.png?v=20260915geoeye1" width="780" height="1440" decoding="async" alt="" draggable="false" />
+          <div class="geo-lock-animation" data-geo-lock-animation>
+            <img class="geo-lock-poster" data-geo-lock-image data-src="backgrounds/geo/animation-location.png?v=20260915geoeye1" width="390" height="720" decoding="async" alt="" draggable="false" />
+            <video class="geo-lock-video" data-geo-lock-video data-src="backgrounds/geo/geo-noise.webm?v=20260915geoeye1" preload="none" loop muted playsinline webkit-playsinline disablepictureinpicture aria-hidden="true"></video>
+          </div>
+          <div class="geo-lock-blur"></div>
+          <img class="geo-lock-layer geo-lock-front" data-geo-lock-image data-src="backgrounds/geo/front-geo.png?v=20260915geoeye1" width="780" height="1440" decoding="async" alt="" draggable="false" />
+        </div>
+
+        <button class="geo-eye-toggle" data-geo-eye-toggle type="button" aria-label="Показать закрытую версию Гео" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2.2 12s3.6-5.2 9.8-5.2 9.8 5.2 9.8 5.2-3.6 5.2-9.8 5.2S2.2 12 2.2 12Z" />
+            <circle cx="12" cy="12" r="2.7" />
+            <path class="geo-eye-slash" d="m4 4 16 16" />
+          </svg>
+        </button>
 
         <div class="timer-system" data-countdown data-effects="on" role="timer" aria-live="off">
           <video
@@ -341,6 +359,6 @@
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260914preview1"></script>
+    <script type="module" src="app.js?v=20260915geoeye1"></script>
   </body>
 </html>

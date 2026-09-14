@@ -168,6 +168,125 @@ button {
   opacity: 1;
 }
 
+.geo-lock-overlay,
+.geo-lock-layer,
+.geo-lock-animation,
+.geo-lock-poster,
+.geo-lock-blur {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.geo-lock-overlay {
+  z-index: 1;
+  visibility: hidden;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app[data-page="geo"][data-geo-locked="true"] .geo-lock-overlay {
+  visibility: visible;
+  opacity: 1;
+}
+
+.geo-lock-layer,
+.geo-lock-poster {
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.geo-lock-back {
+  z-index: 0;
+}
+
+.geo-lock-animation {
+  z-index: 1;
+}
+
+.geo-lock-video {
+  position: absolute;
+  top: 22.3611%;
+  left: 11.5385%;
+  display: block;
+  width: 78.7179%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  opacity: 0;
+}
+
+.geo-lock-animation.is-playing .geo-lock-video {
+  opacity: 1;
+}
+
+.geo-lock-animation.is-playing .geo-lock-poster {
+  opacity: 0;
+}
+
+.geo-lock-blur {
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.08);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.geo-lock-front {
+  z-index: 3;
+}
+
+.geo-eye-toggle {
+  position: absolute;
+  z-index: 4;
+  bottom: max(7px, env(safe-area-inset-bottom, 0px));
+  left: 7px;
+  display: none;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.42);
+  cursor: pointer;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app[data-page="geo"] .geo-eye-toggle {
+  display: block;
+}
+
+.geo-eye-toggle svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.geo-eye-slash {
+  opacity: 0;
+}
+
+.geo-eye-toggle[aria-pressed="true"] .geo-eye-slash {
+  opacity: 1;
+}
+
+.geo-eye-toggle:focus-visible {
+  outline: 2px solid #ff1f9a;
+  outline-offset: 2px;
+}
+
 .timer-system {
   z-index: 1;
   pointer-events: none;
