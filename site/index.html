@@ -35,7 +35,7 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260915allwebp1" />
+    <link rel="stylesheet" href="styles.css?v=20260915geolocked1" />
   </head>
   <body>
     <main class="app" data-app data-page="loading">
@@ -143,14 +143,7 @@
         </div>
 
         <div class="geo-lock-overlay" data-geo-lock-overlay aria-hidden="true">
-          <img class="geo-lock-layer geo-lock-back" data-geo-lock-image data-src="backgrounds/geo/back-geo.png?v=20260915geoeye1" width="780" height="1440" decoding="async" alt="" draggable="false" />
-          <div class="geo-lock-animation" data-geo-lock-animation>
-            <img class="geo-lock-poster" data-geo-lock-image data-src="backgrounds/geo/animation-location.png?v=20260915geoeye1" width="390" height="720" decoding="async" alt="" draggable="false" />
-            <img class="geo-lock-animation-image" data-geo-lock-animation-image data-src="backgrounds/geo/geo-noise.webp?v=20260915allwebp1" width="256" height="256" decoding="async" alt="" draggable="false" />
-            <video class="geo-lock-video" data-geo-lock-video data-src="backgrounds/geo/geo-noise.webm?v=20260915geoeye1" preload="none" loop muted playsinline webkit-playsinline disablepictureinpicture aria-hidden="true"></video>
-          </div>
-          <div class="geo-lock-blur"></div>
-          <img class="geo-lock-layer geo-lock-front" data-geo-lock-image data-src="backgrounds/geo/front-geo.png?v=20260915geoeye1" width="780" height="1440" decoding="async" alt="" draggable="false" />
+          <img class="geo-lock-composite" data-geo-lock-image data-src="backgrounds/geo/geo-locked.webp?v=20260915geolocked2" width="780" height="1440" decoding="async" alt="" draggable="false" />
         </div>
 
         <button class="geo-eye-toggle" data-geo-eye-toggle type="button" aria-label="Показать закрытую версию Гео" aria-pressed="false">
@@ -375,6 +368,6 @@
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260915allwebp1"></script>
+    <script type="module" src="app.js?v=20260915geolocked1"></script>
   </body>
 </html>

@@ -12,10 +12,7 @@ const barImages = [...document.querySelectorAll("[data-bar-image]")];
 const barAnimationImages = [...document.querySelectorAll("[data-bar-animation-image]")];
 const barVideos = [...document.querySelectorAll("[data-bar-video]")];
 const geoLockOverlay = document.querySelector("[data-geo-lock-overlay]");
-const geoLockImages = [...document.querySelectorAll("[data-geo-lock-image]")];
-const geoLockAnimation = document.querySelector("[data-geo-lock-animation]");
-const geoLockAnimationImage = document.querySelector("[data-geo-lock-animation-image]");
-const geoLockVideo = document.querySelector("[data-geo-lock-video]");
+const geoLockImage = document.querySelector("[data-geo-lock-image]");
 const geoEyeToggle = document.querySelector("[data-geo-eye-toggle]");
 const navigationUnderlay = document.querySelector("[data-navigation-underlay]");
 const navigation = initNavigation(document.querySelector("[data-navigation]"), (page) => showPage(page));
@@ -43,7 +40,6 @@ let barImagesReadyPromise = null;
 let barAnimationImagesReadyPromise = null;
 let barVideosPrepared = false;
 let geoLockAssetsPromise = null;
-let geoLockVideoPrepared = false;
 
 const CIGARETTE_ANIMATION_DURATION = 4000;
 const CIGARETTE_IDLE_INTRO_DURATION = 2300;
@@ -54,13 +50,11 @@ function supportsWebmVideo(video) {
 }
 
 const barAnimationFormat = "image";
-const geoLockAnimationFormat = "image";
 let cigaretteAnimationFormat = "image";
 
 barVideos.forEach((video) => {
   video.closest("[data-bar-cocktail]")?.setAttribute("data-animation-format", barAnimationFormat);
 });
-geoLockAnimation?.setAttribute("data-animation-format", geoLockAnimationFormat);
 cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
 
 function useCigaretteImageFallback() {
@@ -464,56 +458,13 @@ function syncBarPlayback() {
 
 function prepareGeoLockAssets() {
   if (!geoLockAssetsPromise) {
-    const imagePreparations = geoLockImages.map((image) => loadDecodedImage(
-        image,
-        image.dataset.src,
-        { highPriority: image.classList.contains("geo-lock-back") },
-      ));
-
-    if (geoLockAnimationFormat === "image") {
-      imagePreparations.push(
-        loadAnimatedImage(geoLockAnimationImage, geoLockAnimationImage.dataset.src)
-          .then(() => geoLockAnimation.classList.add("is-playing"))
-          .catch((error) => {
-            geoLockAnimation.classList.remove("is-playing");
-            console.warn("Could not load the locked Geo animation", error);
-          }),
-      );
-    }
-
-    geoLockAssetsPromise = Promise.all(imagePreparations).catch((error) => {
+    geoLockImage.fetchPriority = "high";
+    geoLockAssetsPromise = loadAnimatedImage(geoLockImage, geoLockImage.dataset.src).catch((error) => {
       geoLockAssetsPromise = null;
       throw error;
     });
   }
-  if (geoLockAnimationFormat === "video" && !geoLockVideoPrepared) {
-    geoLockVideoPrepared = true;
-    geoLockVideo.addEventListener("playing", () => geoLockAnimation.classList.add("is-playing"));
-    geoLockVideo.addEventListener("error", () => geoLockAnimation.classList.remove("is-playing"));
-    geoLockVideo.src = geoLockVideo.dataset.src;
-    geoLockVideo.preload = "auto";
-    geoLockVideo.load();
-  }
   return geoLockAssetsPromise;
-}
-
-function syncGeoLockPlayback() {
-  const active = app.dataset.page === "geo"
-    && app.dataset.geoLocked === "true"
-    && !document.hidden;
-  if (!active) {
-    geoLockVideo?.pause();
-    return;
-  }
-  if (geoLockAnimationFormat === "image") {
-    return;
-  }
-  const playRequest = geoLockVideo?.play();
-  playRequest?.catch((error) => {
-    if (error.name !== "AbortError") {
-      geoLockAnimation?.classList.remove("is-playing");
-    }
-  });
 }
 
 function commitPage(nextPage) {
@@ -529,7 +480,6 @@ function commitPage(nextPage) {
   timerScreenBackground?.setActive(nextPage === "home");
   syncTimerGlowPlayback();
   syncBarPlayback();
-  syncGeoLockPlayback();
 
   if (nextPage === "rsvp") {
     prepareRsvpAssets();
@@ -692,7 +642,6 @@ window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: 
 window.addEventListener("hashchange", () => showPage(pageFromHash(), { updateUrl: false }));
 document.addEventListener("visibilitychange", syncTimerGlowPlayback);
 document.addEventListener("visibilitychange", syncBarPlayback);
-document.addEventListener("visibilitychange", syncGeoLockPlayback);
 
 geoEyeToggle.addEventListener("click", async () => {
   const locked = app.dataset.geoLocked !== "true";
@@ -711,7 +660,6 @@ geoEyeToggle.addEventListener("click", async () => {
     "aria-label",
     locked ? "Показать открытую версию Гео" : "Показать закрытую версию Гео",
   );
-  syncGeoLockPlayback();
 });
 
 showPage(pageFromHash(), { updateUrl: false });

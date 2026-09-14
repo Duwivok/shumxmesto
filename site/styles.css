@@ -173,10 +173,7 @@ button {
 }
 
 .geo-lock-overlay,
-.geo-lock-layer,
-.geo-lock-animation,
-.geo-lock-poster,
-.geo-lock-blur {
+.geo-lock-composite {
   position: absolute;
   inset: 0;
   display: block;
@@ -197,52 +194,10 @@ button {
   opacity: 1;
 }
 
-.geo-lock-layer,
-.geo-lock-poster {
+.geo-lock-composite {
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
-}
-
-.geo-lock-back {
-  z-index: 0;
-}
-
-.geo-lock-animation {
-  z-index: 1;
-}
-
-.geo-lock-animation-image,
-.geo-lock-video {
-  position: absolute;
-  top: 22.3611%;
-  left: 11.5385%;
-  display: block;
-  width: 78.7179%;
-  height: auto;
-  aspect-ratio: 1;
-  object-fit: contain;
-  opacity: 0;
-}
-
-.geo-lock-animation[data-animation-format="image"].is-playing .geo-lock-animation-image,
-.geo-lock-animation[data-animation-format="video"].is-playing .geo-lock-video {
-  opacity: 1;
-}
-
-.geo-lock-animation.is-playing .geo-lock-poster {
-  opacity: 0;
-}
-
-.geo-lock-blur {
-  z-index: 2;
-  background: rgba(0, 0, 0, 0.08);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-}
-
-.geo-lock-front {
-  z-index: 3;
 }
 
 .geo-eye-toggle {
