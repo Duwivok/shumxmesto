@@ -6,6 +6,7 @@ const PAGES = new Set(["home", "lineup", "bar", "rsvp", "geo"]);
 
 const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
+const navigationUnderlay = document.querySelector("[data-navigation-underlay]");
 const navigation = initNavigation(document.querySelector("[data-navigation]"), (page) => showPage(page));
 const timerGlow = document.querySelector("[data-timer-glow]");
 const timerGlowImage = document.querySelector("[data-timer-glow-image]");
@@ -330,6 +331,14 @@ async function showPage(page, { updateUrl = true } = {}) {
   const nextPage = PAGES.has(page) ? page : "home";
   const requestId = ++pageRequestId;
   const background = backgrounds.find((item) => item.dataset.background === nextPage);
+  const pageAssets = [loadDecodedImage(background, background.dataset.src, { highPriority: true })];
+
+  if (navigationUnderlay?.dataset.navigationUnderlay === nextPage) {
+    pageAssets.push(
+      loadDecodedImage(navigationUnderlay, navigationUnderlay.dataset.src)
+        .then(() => navigationUnderlay.classList.add("is-ready")),
+    );
+  }
 
   navigation.setPage(nextPage);
 
@@ -338,7 +347,7 @@ async function showPage(page, { updateUrl = true } = {}) {
   }
 
   try {
-    await loadDecodedImage(background, background.dataset.src, { highPriority: true });
+    await Promise.all(pageAssets);
   } catch (error) {
     console.error(error);
   }
