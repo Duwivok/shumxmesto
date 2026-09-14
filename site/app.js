@@ -25,6 +25,7 @@ let cigaretteResetTimer = 0;
 let cigaretteIdleLoopTimer = 0;
 let cigaretteHasBeenPressed = false;
 let cigaretteIdleIntroHasStarted = false;
+let cigaretteAnimationReadyPromise = null;
 
 const CIGARETTE_ANIMATION_DURATION = 4000;
 const CIGARETTE_IDLE_INTRO_DURATION = 2300;
@@ -36,6 +37,78 @@ function isAppleMobileDevice() {
 
 const cigaretteAnimationFormat = isAppleMobileDevice() ? "image" : "video";
 cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
+
+function waitForVideoData(video) {
+  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      video.removeEventListener("loadeddata", handleLoadedData);
+      video.removeEventListener("error", handleError);
+    };
+    const handleLoadedData = () => {
+      cleanup();
+      resolve();
+    };
+    const handleError = () => {
+      cleanup();
+      reject(new Error("Could not decode the cigarette animation"));
+    };
+
+    video.addEventListener("loadeddata", handleLoadedData, { once: true });
+    video.addEventListener("error", handleError, { once: true });
+  });
+}
+
+function prepareCigaretteAnimation() {
+  if (cigaretteAnimationReadyPromise) {
+    return cigaretteAnimationReadyPromise;
+  }
+
+  if (cigaretteAnimationFormat === "image") {
+    const preparation = (async () => {
+      const image = new Image();
+      image.decoding = "async";
+      image.fetchPriority = "high";
+      image.src = cigaretteImage.dataset.src;
+      await imageReady(image);
+      try {
+        await image.decode?.();
+      } catch (error) {
+        // Some WebKit versions load animated WebP correctly but reject decode().
+        console.debug("The cigarette image is loaded but was not pre-decoded", error);
+      }
+    })();
+    cigaretteAnimationReadyPromise = preparation.catch((error) => {
+      cigaretteAnimationReadyPromise = null;
+      throw error;
+    });
+    return cigaretteAnimationReadyPromise;
+  }
+
+  const preparation = (async () => {
+    // Download the short clip completely before assigning it to <video>.
+    // A Blob-backed source cannot run out of network buffer mid-animation.
+    const response = await fetch(cigaretteVideo.dataset.src, { cache: "force-cache" });
+    if (!response.ok) {
+      throw new Error(`Could not preload the cigarette animation: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    cigaretteVideo.src = URL.createObjectURL(blob);
+    cigaretteVideo.preload = "auto";
+    cigaretteVideo.load();
+    await waitForVideoData(cigaretteVideo);
+  })();
+  cigaretteAnimationReadyPromise = preparation.catch((error) => {
+    cigaretteAnimationReadyPromise = null;
+    throw error;
+  });
+
+  return cigaretteAnimationReadyPromise;
+}
 
 function finishCigaretteAnimation() {
   window.clearTimeout(cigaretteResetTimer);
@@ -110,7 +183,7 @@ function startCigaretteIdle() {
     : cigaretteIdleImage.dataset.loopSrc;
 }
 
-function restartCigaretteAnimation() {
+async function restartCigaretteAnimation() {
   const playbackId = ++cigarettePlaybackId;
 
   cigaretteHasBeenPressed = true;
@@ -123,32 +196,42 @@ function restartCigaretteAnimation() {
     cigaretteImage.onload = null;
     cigaretteImage.onerror = null;
     cigaretteImage.removeAttribute("src");
-    cigaretteImage.onload = () => {
-      if (playbackId !== cigarettePlaybackId) {
-        return;
-      }
+    try {
+      await prepareCigaretteAnimation();
+    } catch (error) {
+      console.error(error);
+      return;
+    }
 
-      cigaretteButton.classList.add("is-playing");
-      cigaretteResetTimer = window.setTimeout(
-        finishCigaretteAnimation,
-        CIGARETTE_ANIMATION_DURATION,
-      );
-    };
+    if (playbackId !== cigarettePlaybackId || app.dataset.page !== "rsvp") {
+      return;
+    }
+
     cigaretteImage.onerror = () => {
       if (playbackId === cigarettePlaybackId) {
         cigaretteButton.classList.remove("is-playing");
       }
     };
+    cigaretteButton.classList.add("is-playing");
     cigaretteImage.src = `${cigaretteImage.dataset.src}#play-${playbackId}`;
+    cigaretteResetTimer = window.setTimeout(
+      finishCigaretteAnimation,
+      CIGARETTE_ANIMATION_DURATION,
+    );
     return;
   }
 
   cigaretteVideo.pause();
 
-  if (!cigaretteVideo.hasAttribute("src")) {
-    cigaretteVideo.src = cigaretteVideo.dataset.src;
-    cigaretteVideo.preload = "auto";
-    cigaretteVideo.load();
+  try {
+    await prepareCigaretteAnimation();
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+
+  if (playbackId !== cigarettePlaybackId || app.dataset.page !== "rsvp") {
+    return;
   }
 
   try {
@@ -216,6 +299,7 @@ function prepareRsvpAssets() {
   if (!cigarettePoster.hasAttribute("src")) {
     cigarettePoster.src = cigarettePoster.dataset.src;
   }
+  prepareCigaretteAnimation().catch((error) => console.error(error));
   startCigaretteIdle();
 }
 
