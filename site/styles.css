@@ -25,7 +25,7 @@ body {
   inset: 0;
   height: 100vh;
   height: 100dvh;
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 button {
@@ -69,6 +69,24 @@ button {
   object-position: center;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.app[data-page="bar"] .backgrounds {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app[data-page="bar"] .backgrounds::-webkit-scrollbar {
+  display: none;
+}
+
+.background[data-background="bar"] {
+  height: auto;
+  min-height: 100%;
 }
 
 .background {

@@ -9,11 +9,11 @@
     <script>
       (() => {
         const sources = {
-          home: "backgrounds/home.png?v=9d1596f35f",
-          lineup: "backgrounds/lineup.png?v=e0cb8737cd",
-          bar: "backgrounds/bar.png?v=027f2cc6c5",
-          rsvp: "backgrounds/rsvp.png?v=6c1d899676",
-          geo: "cat.jpg?v=919838aa23",
+          home: "backgrounds/home.png?v=a7f5261173",
+          lineup: "backgrounds/lineup.png?v=7d078d4963",
+          bar: "backgrounds/bar.png?v=58fbe54321",
+          rsvp: "backgrounds/rsvp.png?v=2f9aaca910",
+          geo: "backgrounds/geo.png?v=af0cd09076",
         };
         const requestedPage = window.location.hash.slice(1).toLowerCase();
         const initialPage = Object.prototype.hasOwnProperty.call(sources, requestedPage)
@@ -27,17 +27,17 @@
         document.head.append(preload);
       })();
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260914focus1" />
+    <link rel="stylesheet" href="styles.css?v=20260914barscroll1" />
   </head>
   <body>
     <main class="app" data-app data-page="loading">
       <div class="scene" aria-live="polite">
         <div class="backgrounds" aria-hidden="true">
-          <img class="background" data-background="home" data-src="backgrounds/home.png?v=9d1596f35f" width="1560" height="2880" decoding="async" alt="" />
-          <img class="background" data-background="lineup" data-src="backgrounds/lineup.png?v=e0cb8737cd" width="1560" height="2880" decoding="async" alt="" />
-          <img class="background" data-background="bar" data-src="backgrounds/bar.png?v=027f2cc6c5" width="1560" height="2880" decoding="async" alt="" />
-          <img class="background" data-background="rsvp" data-src="backgrounds/rsvp.png?v=6c1d899676" width="1560" height="2880" decoding="async" alt="" />
-          <img class="background" data-background="geo" data-src="cat.jpg?v=919838aa23" width="400" height="400" decoding="async" alt="" />
+          <img class="background" data-background="home" data-src="backgrounds/home.png?v=a7f5261173" width="780" height="1440" decoding="async" alt="" />
+          <img class="background" data-background="lineup" data-src="backgrounds/lineup.png?v=7d078d4963" width="780" height="1440" decoding="async" alt="" />
+          <img class="background" data-background="bar" data-src="backgrounds/bar.png?v=58fbe54321" width="780" height="2070" decoding="async" alt="" />
+          <img class="background" data-background="rsvp" data-src="backgrounds/rsvp.png?v=2f9aaca910" width="780" height="1440" decoding="async" alt="" />
+          <img class="background" data-background="geo" data-src="backgrounds/geo.png?v=af0cd09076" width="780" height="1440" decoding="async" alt="" />
         </div>
 
         <div class="timer-system" data-countdown data-effects="on" role="timer" aria-live="off">
