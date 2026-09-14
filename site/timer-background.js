@@ -1,84 +1,43 @@
-// One transparent, already projected movie covers the entire scene.
-// The supplied PNG poster keeps the same appearance if playback is unavailable.
+// The transparent animated WebP covers the entire scene. A PNG poster remains
+// available if the animation cannot be decoded.
 class TimerScreenBackground {
-  constructor(video) {
-    this.video = video;
+  constructor(image) {
+    this.image = image;
     this.active = false;
-    this.started = false;
-    this.failed = false;
-    video.muted = true;
 
-    this.handleLoadedData = () => {
-      try {
-        // The top-left pixel is outside all three screens. Verify actual
-        // decoded alpha before accepting a decoder that could paint it black.
-        const canvas = document.createElement("canvas");
-        canvas.width = canvas.height = 1;
-        const context = canvas.getContext("2d");
-        context.drawImage(video, 0, 0, 1, 1, 0, 0, 1, 1);
-        if (context.getImageData(0, 0, 1, 1).data[3] !== 0) {
-          throw new Error("The video decoder does not preserve transparency");
-        }
-        video.dataset.state = "video";
-      } catch (error) {
-        this.showPoster(error);
+    this.handleError = () => {
+      const poster = this.image.dataset.poster;
+      if (!poster || this.image.getAttribute("src") === poster) {
+        return;
       }
+      this.image.dataset.state = "poster";
+      this.image.src = poster;
     };
-    this.handleError = () => this.showPoster(
-      new Error(video.error?.message || "Could not load the screen background video"),
-    );
-    this.handleVisibilityChange = () => this.syncPlayback();
-    video.addEventListener("loadeddata", this.handleLoadedData);
-    video.addEventListener("error", this.handleError);
-    document.addEventListener("visibilitychange", this.handleVisibilityChange);
-  }
 
-  showPoster(error) {
-    if (this.failed) {
-      return;
-    }
-    this.failed = true;
-    this.video.pause();
-    this.video.removeAttribute("src");
-    this.video.load();
-    this.video.dataset.state = "poster";
-    console.warn("Using the transparent screen background poster", error);
-  }
-
-  syncPlayback() {
-    if (this.failed || !this.started) {
-      return;
-    }
-    if (!this.active || document.hidden) {
-      this.video.pause();
-      return;
-    }
-    this.video.play()?.catch((error) => {
-      if (error.name !== "AbortError" && this.active && !document.hidden) {
-        this.showPoster(error);
-      }
-    });
+    image.addEventListener("error", this.handleError);
   }
 
   setActive(active) {
     this.active = active;
-    if (active && !this.started && !this.failed) {
-      this.started = true;
-      this.video.src = this.video.dataset.src;
-      this.video.load();
+    if (!active && !this.image.hasAttribute("src")) {
+      return;
     }
-    this.syncPlayback();
+
+    const source = active ? this.image.dataset.src : this.image.dataset.poster;
+    if (!source || this.image.getAttribute("src") === source) {
+      return;
+    }
+
+    this.image.dataset.state = active ? "image" : "poster";
+    this.image.src = source;
   }
 
   destroy() {
     this.active = false;
-    this.video.pause();
-    this.video.removeEventListener("loadeddata", this.handleLoadedData);
-    this.video.removeEventListener("error", this.handleError);
-    document.removeEventListener("visibilitychange", this.handleVisibilityChange);
+    this.image.removeEventListener("error", this.handleError);
   }
 }
 
-export function initTimerScreenBackground(video) {
-  return video ? new TimerScreenBackground(video) : null;
+export function initTimerScreenBackground(image) {
+  return image ? new TimerScreenBackground(image) : null;
 }

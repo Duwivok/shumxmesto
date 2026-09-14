@@ -1,5 +1,5 @@
 import { initCountdownTimer } from "./timer.js?v=20260914cold1";
-import { initTimerScreenBackground } from "./timer-background.js?v=20260913background1";
+import { initTimerScreenBackground } from "./timer-background.js?v=20260915allwebp1";
 import { initNavigation } from "./navigation.js?v=20260914focus1";
 import { RSVP_CONFIG } from "./rsvp-config.js?v=20260914preview1";
 import { createRsvpController } from "./rsvp.js?v=20260914preview1";
@@ -9,10 +9,12 @@ const PAGES = new Set(["home", "lineup", "bar", "rsvp", "geo"]);
 const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
 const barImages = [...document.querySelectorAll("[data-bar-image]")];
+const barAnimationImages = [...document.querySelectorAll("[data-bar-animation-image]")];
 const barVideos = [...document.querySelectorAll("[data-bar-video]")];
 const geoLockOverlay = document.querySelector("[data-geo-lock-overlay]");
 const geoLockImages = [...document.querySelectorAll("[data-geo-lock-image]")];
 const geoLockAnimation = document.querySelector("[data-geo-lock-animation]");
+const geoLockAnimationImage = document.querySelector("[data-geo-lock-animation-image]");
 const geoLockVideo = document.querySelector("[data-geo-lock-video]");
 const geoEyeToggle = document.querySelector("[data-geo-eye-toggle]");
 const navigationUnderlay = document.querySelector("[data-navigation-underlay]");
@@ -26,9 +28,9 @@ const cigaretteIdleImage = document.querySelector("[data-cigarette-idle]");
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
 const cigaretteVideo = document.querySelector("[data-cigarette-video]");
 const cigaretteDefaultLabel = cigaretteButton.getAttribute("aria-label");
-const timerBackgroundVideo = document.querySelector("[data-timer-background-video]");
+const timerBackgroundImage = document.querySelector("[data-timer-background-image]");
 let countdownTimer = null;
-const timerScreenBackground = initTimerScreenBackground(timerBackgroundVideo);
+const timerScreenBackground = initTimerScreenBackground(timerBackgroundImage);
 let timerGlowInitialized = false;
 let pageRequestId = 0;
 let cigarettePlaybackId = 0;
@@ -38,6 +40,7 @@ let cigaretteHasBeenPressed = false;
 let cigaretteIdleIntroHasStarted = false;
 let cigaretteAnimationReadyPromise = null;
 let barImagesReadyPromise = null;
+let barAnimationImagesReadyPromise = null;
 let barVideosPrepared = false;
 let geoLockAssetsPromise = null;
 let geoLockVideoPrepared = false;
@@ -50,7 +53,14 @@ function supportsWebmVideo(video) {
     && video.canPlayType('video/webm; codecs="vp9"') !== "";
 }
 
-let cigaretteAnimationFormat = supportsWebmVideo(cigaretteVideo) ? "video" : "image";
+const barAnimationFormat = "image";
+const geoLockAnimationFormat = "image";
+let cigaretteAnimationFormat = "image";
+
+barVideos.forEach((video) => {
+  video.closest("[data-bar-cocktail]")?.setAttribute("data-animation-format", barAnimationFormat);
+});
+geoLockAnimation?.setAttribute("data-animation-format", geoLockAnimationFormat);
 cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
 
 function useCigaretteImageFallback() {
@@ -315,11 +325,22 @@ async function loadDecodedImage(image, source, { highPriority = false } = {}) {
   return image;
 }
 
-function ensureHomeExperience() {
-  if (!timerBackgroundVideo.poster) {
-    timerBackgroundVideo.poster = timerBackgroundVideo.dataset.poster;
+async function loadAnimatedImage(image, source) {
+  if (image.getAttribute("src") !== source) {
+    image.src = source;
   }
 
+  await imageReady(image);
+  try {
+    await image.decode?.();
+  } catch (error) {
+    // Some WebKit versions animate WebP correctly but reject decode().
+    console.debug("The animated image is loaded but was not pre-decoded", error);
+  }
+  return image;
+}
+
+function ensureHomeExperience() {
   if (!countdownTimer) {
     countdownTimer = initCountdownTimer(document.querySelector("[data-countdown]"));
   }
@@ -382,7 +403,39 @@ function prepareBarVideos() {
   });
 }
 
+function prepareBarAnimationImages() {
+  if (barAnimationImagesReadyPromise) {
+    return barAnimationImagesReadyPromise;
+  }
+
+  const preparation = Promise.all(
+    barAnimationImages.map(async (image) => {
+      const cocktail = image.closest("[data-bar-cocktail]");
+      try {
+        await loadAnimatedImage(image, image.dataset.src);
+        cocktail?.classList.add("is-playing");
+      } catch (error) {
+        cocktail?.classList.remove("is-playing");
+        console.warn(`Could not load the bar animation: ${image.dataset.src}`, error);
+      }
+    }),
+  );
+
+  barAnimationImagesReadyPromise = preparation.catch((error) => {
+    barAnimationImagesReadyPromise = null;
+    throw error;
+  });
+  return barAnimationImagesReadyPromise;
+}
+
 function syncBarPlayback() {
+  if (barAnimationFormat === "image") {
+    if (app.dataset.page === "bar" && !document.hidden) {
+      prepareBarAnimationImages().catch((error) => console.error(error));
+    }
+    return;
+  }
+
   if (!barVideos.length) {
     return;
   }
@@ -411,18 +464,29 @@ function syncBarPlayback() {
 
 function prepareGeoLockAssets() {
   if (!geoLockAssetsPromise) {
-    geoLockAssetsPromise = Promise.all(
-      geoLockImages.map((image) => loadDecodedImage(
+    const imagePreparations = geoLockImages.map((image) => loadDecodedImage(
         image,
         image.dataset.src,
         { highPriority: image.classList.contains("geo-lock-back") },
-      )),
-    ).catch((error) => {
+      ));
+
+    if (geoLockAnimationFormat === "image") {
+      imagePreparations.push(
+        loadAnimatedImage(geoLockAnimationImage, geoLockAnimationImage.dataset.src)
+          .then(() => geoLockAnimation.classList.add("is-playing"))
+          .catch((error) => {
+            geoLockAnimation.classList.remove("is-playing");
+            console.warn("Could not load the locked Geo animation", error);
+          }),
+      );
+    }
+
+    geoLockAssetsPromise = Promise.all(imagePreparations).catch((error) => {
       geoLockAssetsPromise = null;
       throw error;
     });
   }
-  if (!geoLockVideoPrepared && supportsWebmVideo(geoLockVideo)) {
+  if (geoLockAnimationFormat === "video" && !geoLockVideoPrepared) {
     geoLockVideoPrepared = true;
     geoLockVideo.addEventListener("playing", () => geoLockAnimation.classList.add("is-playing"));
     geoLockVideo.addEventListener("error", () => geoLockAnimation.classList.remove("is-playing"));
@@ -439,6 +503,9 @@ function syncGeoLockPlayback() {
     && !document.hidden;
   if (!active) {
     geoLockVideo?.pause();
+    return;
+  }
+  if (geoLockAnimationFormat === "image") {
     return;
   }
   const playRequest = geoLockVideo?.play();
@@ -583,12 +650,7 @@ function initTimerGlow() {
     return;
   }
 
-  if (!supportsWebmVideo(timerGlowVideo)) {
-    showTimerGlowImage();
-    return;
-  }
-
-  showTimerGlowVideo();
+  showTimerGlowImage();
 }
 
 const rsvpController = createRsvpController({

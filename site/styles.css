@@ -119,6 +119,7 @@ button {
   opacity: 1;
 }
 
+.bar-cocktail-animation,
 .bar-cocktail-video {
   position: absolute;
   z-index: 2;
@@ -129,8 +130,9 @@ button {
   transition: opacity 120ms linear;
 }
 
-/* The video canvases have different transparent padding. These values map
+/* The animation canvases have different transparent padding. These values map
    their fixed alpha bounds onto the matching 780 x 1772 PNG references. */
+.bar-cocktail--martine .bar-cocktail-animation,
 .bar-cocktail--martine .bar-cocktail-video {
   top: 14.647%;
   left: -2.927%;
@@ -138,6 +140,7 @@ button {
   height: 29.377%;
 }
 
+.bar-cocktail--nastoika .bar-cocktail-animation,
 .bar-cocktail--nastoika .bar-cocktail-video {
   top: 22.686%;
   left: 48.654%;
@@ -145,7 +148,8 @@ button {
   height: 20.316%;
 }
 
-.bar-cocktail.is-playing .bar-cocktail-video {
+.bar-cocktail[data-animation-format="image"].is-playing .bar-cocktail-animation,
+.bar-cocktail[data-animation-format="video"].is-playing .bar-cocktail-video {
   opacity: 1;
 }
 
@@ -208,6 +212,7 @@ button {
   z-index: 1;
 }
 
+.geo-lock-animation-image,
 .geo-lock-video {
   position: absolute;
   top: 22.3611%;
@@ -220,7 +225,8 @@ button {
   opacity: 0;
 }
 
-.geo-lock-animation.is-playing .geo-lock-video {
+.geo-lock-animation[data-animation-format="image"].is-playing .geo-lock-animation-image,
+.geo-lock-animation[data-animation-format="video"].is-playing .geo-lock-video {
   opacity: 1;
 }
 
