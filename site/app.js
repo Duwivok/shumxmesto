@@ -11,9 +11,6 @@ const geoHiddenOverride = requestedGeoMode === "hidden"
   : requestedGeoMode === "shown"
     ? false
     : null;
-const geoStateUrl = window.location.hostname === "duwivok.github.io"
-  ? new URL("geo-state.json", window.location.href)
-  : new URL("/api/geo-state", window.location.origin);
 
 const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
@@ -458,8 +455,7 @@ async function refreshGeoState() {
   let hidden = geoHiddenOverride ?? true;
   if (geoHiddenOverride === null) {
     try {
-      geoStateUrl.searchParams.set("v", String(Date.now()));
-      const response = await fetch(geoStateUrl, {
+      const response = await fetch("/api/geo-state", {
         cache: "no-store",
         headers: { Accept: "application/json" },
       });
