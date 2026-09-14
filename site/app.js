@@ -1,6 +1,6 @@
 import { initCountdownTimer } from "./timer.js?v=20260914cold1";
 import { initTimerScreenBackground } from "./timer-background.js?v=20260913background1";
-import { initNavigation } from "./navigation.js?v=20260914carousel1";
+import { initNavigation } from "./navigation.js?v=20260914focus1";
 
 const PAGES = new Set(["home", "lineup", "bar", "rsvp", "geo"]);
 

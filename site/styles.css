@@ -475,7 +475,7 @@ button {
   -webkit-user-drag: none;
 }
 
-.nav-button:focus-visible {
+.navigation-buttons:not([data-input-method="pointer"]) .nav-button:focus-visible {
   outline: 2px solid #ff1f9a;
   outline-offset: 4px;
 }

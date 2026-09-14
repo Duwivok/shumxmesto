@@ -70,6 +70,7 @@ export function initNavigation(navigation, onSelect) {
 
   navigation.addEventListener("pointerdown", (event) => {
     if (!event.isPrimary || event.button !== 0 || gesture) return;
+    navigation.dataset.inputMethod = "pointer";
     suppressClick = false;
     gesture = {
       pointerId: event.pointerId,
@@ -139,6 +140,14 @@ export function initNavigation(navigation, onSelect) {
       select(index, { focus: true });
     });
   });
+
+  // Safari can match :focus-visible after focus() in a touch handler. Track
+  // input explicitly so taps stay unoutlined and Tab restores keyboard focus.
+  document.addEventListener("keydown", (event) => {
+    if (!event.altKey && !event.ctrlKey && !event.metaKey) {
+      navigation.dataset.inputMethod = "keyboard";
+    }
+  }, { capture: true });
 
   navigation.addEventListener("keydown", (event) => {
     const target = { ArrowLeft: selected - 1, ArrowRight: selected + 1, Home: 0, End: buttons.length - 1 }[event.key];
