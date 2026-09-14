@@ -160,6 +160,17 @@ test("the same server serves the frontend without cookies", async (testContext) 
   assert.match(html, /data-cigarette/);
 });
 
+test("the geo state is global, persistent, and served without caching", async (testContext) => {
+  const fixture = await serverFixture(testContext);
+  const initiallyHidden = await fetch(`${fixture.baseUrl}/api/geo-state`);
+  assert.deepEqual(await initiallyHidden.json(), { hidden: true });
+  assert.equal(initiallyHidden.headers.get("cache-control"), "no-store");
+
+  fixture.storage.setGeoHidden(false);
+  const shown = await fetch(`${fixture.baseUrl}/api/geo-state`);
+  assert.deepEqual(await shown.json(), { hidden: false });
+});
+
 test("the public client does not contain Telegram secrets or profile access", () => {
   const clientSource = fs.readFileSync(path.join(projectRoot, "site", "app.js"), "utf8")
     + fs.readFileSync(path.join(projectRoot, "site", "rsvp.js"), "utf8")

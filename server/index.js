@@ -2,7 +2,7 @@ import http from "node:http";
 import { loadConfig } from "./config.js";
 import { createRequestHandler } from "./request-handler.js";
 import { openRsvpStorage } from "./storage.js";
-import { createTelegramNotifier } from "./telegram.js";
+import { createTelegramCommandPoller, createTelegramNotifier } from "./telegram.js";
 
 let config;
 try {
@@ -16,6 +16,13 @@ const storage = openRsvpStorage(config.databasePath);
 const notifier = createTelegramNotifier({
   botToken: config.telegramBotToken,
   organizerChatId: config.telegramOrganizerChatId,
+});
+const commandPoller = createTelegramCommandPoller({
+  botToken: config.telegramBotToken,
+  organizerChatId: config.telegramOrganizerChatId,
+  setGeoHidden: (hidden) => storage.setGeoHidden(hidden),
+  getTelegramOffset: () => storage.getTelegramOffset(),
+  setTelegramOffset: (offset) => storage.setTelegramOffset(offset),
 });
 const handler = createRequestHandler({
   staticRoot: config.staticRoot,
@@ -34,9 +41,11 @@ server.maxRequestsPerSocket = 100;
 
 server.listen(config.port, config.host, () => {
   console.log(`SHUM server listening on ${config.host}:${config.port}`);
+  commandPoller.start();
 });
 
 function shutdown() {
+  commandPoller.stop();
   server.close(() => {
     storage.close();
     process.exit(0);

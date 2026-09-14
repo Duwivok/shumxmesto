@@ -10,6 +10,10 @@ const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
 const barImages = [...document.querySelectorAll("[data-bar-image]")];
 const barVideos = [...document.querySelectorAll("[data-bar-video]")];
+const geoBackground = document.querySelector("[data-geo-background]");
+const geoImages = [...document.querySelectorAll("[data-geo-image]")];
+const geoAnimation = document.querySelector("[data-geo-animation]");
+const geoVideo = document.querySelector("[data-geo-video]");
 const navigationUnderlay = document.querySelector("[data-navigation-underlay]");
 const navigation = initNavigation(document.querySelector("[data-navigation]"), (page) => showPage(page));
 const timerGlow = document.querySelector("[data-timer-glow]");
@@ -34,6 +38,8 @@ let cigaretteIdleIntroHasStarted = false;
 let cigaretteAnimationReadyPromise = null;
 let barImagesReadyPromise = null;
 let barVideosPrepared = false;
+let geoVideoPrepared = false;
+let geoStateRequestId = 0;
 
 const CIGARETTE_ANIMATION_DURATION = 4000;
 const CIGARETTE_IDLE_INTRO_DURATION = 2300;
@@ -402,6 +408,74 @@ function syncBarPlayback() {
   });
 }
 
+function prepareGeoVideo() {
+  if (geoVideoPrepared || !geoVideo || !supportsWebmVideo(geoVideo)) {
+    return;
+  }
+  geoVideoPrepared = true;
+  geoVideo.addEventListener("playing", () => geoAnimation?.classList.add("is-playing"));
+  geoVideo.addEventListener("error", () => {
+    geoAnimation?.classList.remove("is-playing");
+    console.warn("Could not load the geo animation; keeping its poster");
+  });
+  geoVideo.src = geoVideo.dataset.src;
+  geoVideo.preload = "auto";
+  geoVideo.load();
+}
+
+function syncGeoPlayback() {
+  if (!geoVideo) {
+    return;
+  }
+  const shouldPlay = app.dataset.page === "geo"
+    && geoBackground?.dataset.hidden === "true"
+    && !document.hidden;
+  if (!shouldPlay) {
+    geoVideo.pause();
+    return;
+  }
+  prepareGeoVideo();
+  const playRequest = geoVideo.play();
+  playRequest?.catch((error) => {
+    if (error.name !== "AbortError") {
+      geoAnimation?.classList.remove("is-playing");
+      console.warn("Could not autoplay the geo animation; keeping its poster", error);
+    }
+  });
+}
+
+async function refreshGeoState() {
+  const requestId = ++geoStateRequestId;
+  let hidden = true;
+  try {
+    const response = await fetch("/api/geo-state", {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    });
+    const result = await response.json();
+    if (!response.ok || typeof result.hidden !== "boolean") {
+      throw new Error("Invalid geo state response");
+    }
+    hidden = result.hidden;
+  } catch (error) {
+    console.warn("Could not refresh the geo state; keeping the section hidden", error);
+  }
+
+  const neededImages = hidden
+    ? geoImages.filter((image) => image.dataset.geoImage !== "open")
+    : geoImages.filter((image) => image.dataset.geoImage === "open");
+  await Promise.all(neededImages.map((image) => loadDecodedImage(
+    image,
+    image.dataset.src,
+    { highPriority: image.dataset.geoImage === (hidden ? "back" : "open") },
+  )));
+  if (requestId !== geoStateRequestId) {
+    return;
+  }
+  geoBackground.dataset.hidden = String(hidden);
+  syncGeoPlayback();
+}
+
 function commitPage(nextPage) {
   app.dataset.page = nextPage;
   backgrounds.forEach((background) => {
@@ -415,6 +489,7 @@ function commitPage(nextPage) {
   timerScreenBackground?.setActive(nextPage === "home");
   syncTimerGlowPlayback();
   syncBarPlayback();
+  syncGeoPlayback();
 
   if (nextPage === "rsvp") {
     prepareRsvpAssets();
@@ -432,7 +507,9 @@ async function showPage(page, { updateUrl = true } = {}) {
   const background = backgrounds.find((item) => item.dataset.background === nextPage);
   const pageAssets = nextPage === "bar"
     ? [prepareBarImages()]
-    : [loadDecodedImage(background, background.dataset.src, { highPriority: true })];
+    : nextPage === "geo"
+      ? [refreshGeoState()]
+      : [loadDecodedImage(background, background.dataset.src, { highPriority: true })];
 
   if (navigationUnderlay?.dataset.navigationUnderlay === nextPage) {
     pageAssets.push(
@@ -582,5 +659,18 @@ window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: 
 window.addEventListener("hashchange", () => showPage(pageFromHash(), { updateUrl: false }));
 document.addEventListener("visibilitychange", syncTimerGlowPlayback);
 document.addEventListener("visibilitychange", syncBarPlayback);
+document.addEventListener("visibilitychange", () => {
+  if (app.dataset.page === "geo" && !document.hidden) {
+    void refreshGeoState();
+  } else {
+    syncGeoPlayback();
+  }
+});
+
+window.setInterval(() => {
+  if (app.dataset.page === "geo" && !document.hidden) {
+    void refreshGeoState();
+  }
+}, 10_000);
 
 showPage(pageFromHash(), { updateUrl: false });

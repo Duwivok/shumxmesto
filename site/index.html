@@ -13,7 +13,7 @@
           lineup: "backgrounds/lineup.png?v=7d078d4963",
           bar: "backgrounds/bar/back.png?v=20260914bar1",
           rsvp: "backgrounds/rsvp.png?v=4099bfd00d",
-          geo: "backgrounds/geo.png?v=af0cd09076",
+          geo: "backgrounds/geo/back-geo.png?v=20260914geo1",
         };
         const requestedPage = window.location.hash.slice(1).toLowerCase();
         const initialPage = Object.prototype.hasOwnProperty.call(sources, requestedPage)
@@ -35,7 +35,7 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260914bar1" />
+    <link rel="stylesheet" href="styles.css?v=20260914geo1" />
   </head>
   <body>
     <main class="app" data-app data-page="loading">
@@ -119,7 +119,66 @@
             />
           </div>
           <img class="background" data-background="rsvp" data-src="backgrounds/rsvp.png?v=4099bfd00d" width="780" height="1440" decoding="async" alt="" />
-          <img class="background" data-background="geo" data-src="backgrounds/geo.png?v=af0cd09076" width="780" height="1440" decoding="async" alt="" />
+          <div class="background geo-background" data-background="geo" data-geo-background data-hidden="true">
+            <img
+              class="geo-open"
+              data-geo-image="open"
+              data-src="backgrounds/geo.png?v=af0cd09076"
+              width="780"
+              height="1440"
+              decoding="async"
+              alt=""
+              draggable="false"
+            />
+            <div class="geo-locked">
+              <img
+                class="geo-layer geo-back"
+                data-geo-image="back"
+                data-src="backgrounds/geo/back-geo.png?v=20260914geo1"
+                width="780"
+                height="1440"
+                decoding="async"
+                alt=""
+                draggable="false"
+              />
+              <div class="geo-animation" data-geo-animation>
+                <img
+                  class="geo-animation-poster"
+                  data-geo-image="poster"
+                  data-src="backgrounds/geo/animation-location.png?v=20260914geo1"
+                  width="390"
+                  height="720"
+                  decoding="async"
+                  alt=""
+                  draggable="false"
+                />
+                <video
+                  class="geo-animation-video"
+                  data-geo-video
+                  data-src="backgrounds/geo/geo-noise.webm?v=20260914geo1"
+                  preload="none"
+                  autoplay
+                  loop
+                  muted
+                  playsinline
+                  webkit-playsinline
+                  disablepictureinpicture
+                  aria-hidden="true"
+                ></video>
+              </div>
+              <div class="geo-blur" aria-hidden="true"></div>
+              <img
+                class="geo-layer geo-front"
+                data-geo-image="front"
+                data-src="backgrounds/geo/front-geo.png?v=20260914geo1"
+                width="780"
+                height="1440"
+                decoding="async"
+                alt=""
+                draggable="false"
+              />
+            </div>
+          </div>
         </div>
 
         <div class="timer-system" data-countdown data-effects="on" role="timer" aria-live="off">
@@ -341,6 +400,6 @@
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260914preview1"></script>
+    <script type="module" src="app.js?v=20260914geo1"></script>
   </body>
 </html>
