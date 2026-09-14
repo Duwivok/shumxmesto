@@ -40,6 +40,7 @@ let barImagesReadyPromise = null;
 let barAnimationImagesReadyPromise = null;
 let barVideosPrepared = false;
 let geoLockAssetsPromise = null;
+let animatedImagePlaybackId = 0;
 
 const CIGARETTE_ANIMATION_DURATION = 4000;
 const CIGARETTE_IDLE_INTRO_DURATION = 2300;
@@ -320,17 +321,24 @@ async function loadDecodedImage(image, source, { highPriority = false } = {}) {
 }
 
 async function loadAnimatedImage(image, source) {
-  if (image.getAttribute("src") !== source) {
-    image.src = source;
-  }
-
-  await imageReady(image);
+  // Warm animated WebP in a detached image before exposing the real element.
+  // On a cold iPhone launch, showing the first decode directly can stretch the
+  // animation timeline. Starting a fresh instance from the warmed cache keeps
+  // playback at its authored speed, as with the RSVP cigarette animation.
+  const preloader = new Image();
+  preloader.decoding = "async";
+  preloader.fetchPriority = image.fetchPriority || "auto";
+  preloader.src = source;
+  await imageReady(preloader);
   try {
-    await image.decode?.();
+    await preloader.decode?.();
   } catch (error) {
     // Some WebKit versions animate WebP correctly but reject decode().
     console.debug("The animated image is loaded but was not pre-decoded", error);
   }
+
+  image.src = `${source}#play-${++animatedImagePlaybackId}`;
+  await imageReady(image);
   return image;
 }
 
