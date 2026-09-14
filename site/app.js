@@ -1,4 +1,4 @@
-import { initCountdownTimer } from "./timer.js?v=20260914words1";
+import { initCountdownTimer } from "./timer.js?v=20260914cold1";
 import { initTimerScreenBackground } from "./timer-background.js?v=20260913background1";
 import { initNavigation } from "./navigation.js?v=20260914carousel1";
 
@@ -6,17 +6,20 @@ const PAGES = new Set(["home", "lineup", "bar", "rsvp", "geo"]);
 
 const app = document.querySelector("[data-app]");
 const backgrounds = [...document.querySelectorAll("[data-background]")];
-const navigationImages = [...document.querySelectorAll(".nav-button-art")];
 const navigation = initNavigation(document.querySelector("[data-navigation]"), (page) => showPage(page));
 const timerGlow = document.querySelector("[data-timer-glow]");
 const timerGlowImage = document.querySelector("[data-timer-glow-image]");
 const timerGlowVideo = document.querySelector("[data-timer-glow-video]");
 const cigaretteButton = document.querySelector("[data-cigarette]");
+const cigarettePoster = document.querySelector("[data-cigarette-poster]");
 const cigaretteIdleImage = document.querySelector("[data-cigarette-idle]");
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
 const cigaretteVideo = document.querySelector("[data-cigarette-video]");
-const countdownTimer = initCountdownTimer(document.querySelector("[data-countdown]"));
-const timerScreenBackground = initTimerScreenBackground(document.querySelector("[data-timer-background-video]"));
+const timerBackgroundVideo = document.querySelector("[data-timer-background-video]");
+let countdownTimer = null;
+const timerScreenBackground = initTimerScreenBackground(timerBackgroundVideo);
+let timerGlowInitialized = false;
+let pageRequestId = 0;
 let cigarettePlaybackId = 0;
 let cigaretteResetTimer = 0;
 let cigaretteIdleLoopTimer = 0;
@@ -33,19 +36,6 @@ function isAppleMobileDevice() {
 
 const cigaretteAnimationFormat = isAppleMobileDevice() ? "image" : "video";
 cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
-
-if (cigaretteAnimationFormat === "image") {
-  const preload = document.createElement("link");
-  preload.rel = "preload";
-  preload.as = "image";
-  preload.type = "image/webp";
-  preload.href = cigaretteImage.dataset.src;
-  document.head.append(preload);
-} else {
-  cigaretteVideo.src = cigaretteVideo.dataset.src;
-  cigaretteVideo.preload = "auto";
-  cigaretteVideo.load();
-}
 
 function finishCigaretteAnimation() {
   window.clearTimeout(cigaretteResetTimer);
@@ -155,24 +145,36 @@ function restartCigaretteAnimation() {
 
   cigaretteVideo.pause();
 
+  if (!cigaretteVideo.hasAttribute("src")) {
+    cigaretteVideo.src = cigaretteVideo.dataset.src;
+    cigaretteVideo.preload = "auto";
+    cigaretteVideo.load();
+  }
+
   try {
     cigaretteVideo.currentTime = 0;
   } catch (error) {
     console.debug("Cigarette video is not ready to seek yet", error);
   }
 
-  cigaretteButton.classList.add("is-playing");
-
   const playRequest = cigaretteVideo.play();
 
   if (playRequest) {
-    playRequest.catch((error) => {
-      if (playbackId === cigarettePlaybackId) {
-        cigaretteButton.classList.remove("is-playing");
-      }
+    playRequest
+      .then(() => {
+        if (playbackId === cigarettePlaybackId) {
+          cigaretteButton.classList.add("is-playing");
+        }
+      })
+      .catch((error) => {
+        if (playbackId === cigarettePlaybackId) {
+          cigaretteButton.classList.remove("is-playing");
+        }
 
-      console.error("Could not play the cigarette animation", error);
-    });
+        console.error("Could not play the cigarette animation", error);
+      });
+  } else {
+    cigaretteButton.classList.add("is-playing");
   }
 }
 
@@ -181,28 +183,84 @@ function pageFromHash() {
   return PAGES.has(page) ? page : "home";
 }
 
-function showPage(page, { updateUrl = true } = {}) {
-  const nextPage = PAGES.has(page) ? page : "home";
+async function loadDecodedImage(image, source, { highPriority = false } = {}) {
+  if (highPriority) {
+    image.fetchPriority = "high";
+  }
 
+  if (image.getAttribute("src") !== source) {
+    image.src = source;
+  }
+
+  await imageReady(image);
+  await image.decode?.();
+  return image;
+}
+
+function ensureHomeExperience() {
+  if (!timerBackgroundVideo.poster) {
+    timerBackgroundVideo.poster = timerBackgroundVideo.dataset.poster;
+  }
+
+  if (!countdownTimer) {
+    countdownTimer = initCountdownTimer(document.querySelector("[data-countdown]"));
+  }
+
+  if (!timerGlowInitialized) {
+    timerGlowInitialized = true;
+    initTimerGlow();
+  }
+}
+
+function prepareRsvpAssets() {
+  if (!cigarettePoster.hasAttribute("src")) {
+    cigarettePoster.src = cigarettePoster.dataset.src;
+  }
+  startCigaretteIdle();
+}
+
+function commitPage(nextPage) {
   app.dataset.page = nextPage;
+  backgrounds.forEach((background) => {
+    background.classList.toggle("is-active", background.dataset.background === nextPage);
+  });
+
+  if (nextPage === "home") {
+    ensureHomeExperience();
+  }
   countdownTimer?.setActive(nextPage === "home");
   timerScreenBackground?.setActive(nextPage === "home");
   syncTimerGlowPlayback();
 
   if (nextPage === "rsvp") {
-    startCigaretteIdle();
-  } else if (!cigaretteHasBeenPressed) {
-    stopCigaretteIdle({ discard: true });
+    prepareRsvpAssets();
+  } else {
+    cigaretteVideo.pause();
+    if (!cigaretteHasBeenPressed) {
+      stopCigaretteIdle({ discard: true });
+    }
   }
+}
 
-  backgrounds.forEach((background) => {
-    background.classList.toggle("is-active", background.dataset.background === nextPage);
-  });
+async function showPage(page, { updateUrl = true } = {}) {
+  const nextPage = PAGES.has(page) ? page : "home";
+  const requestId = ++pageRequestId;
+  const background = backgrounds.find((item) => item.dataset.background === nextPage);
 
   navigation.setPage(nextPage);
 
   if (updateUrl && window.location.hash !== `#${nextPage}`) {
     window.history.pushState({ page: nextPage }, "", `#${nextPage}`);
+  }
+
+  try {
+    await loadDecodedImage(background, background.dataset.src, { highPriority: true });
+  } catch (error) {
+    console.error(error);
+  }
+
+  if (requestId === pageRequestId) {
+    commitPage(nextPage);
   }
 }
 
@@ -284,12 +342,6 @@ function initTimerGlow() {
   }
 
   if (isAppleMobileDevice()) {
-    const preload = document.createElement("link");
-    preload.rel = "preload";
-    preload.as = "image";
-    preload.type = "image/webp";
-    preload.href = timerGlowImage.dataset.src;
-    document.head.append(preload);
     showTimerGlowImage();
     return;
   }
@@ -304,13 +356,4 @@ window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: 
 window.addEventListener("hashchange", () => showPage(pageFromHash(), { updateUrl: false }));
 document.addEventListener("visibilitychange", syncTimerGlowPlayback);
 
-initTimerGlow();
 showPage(pageFromHash(), { updateUrl: false });
-
-const preloadedImages = [...backgrounds, ...navigationImages];
-
-Promise.all(preloadedImages.map(imageReady))
-  .catch((error) => console.error(error))
-  .finally(() => {
-    app.dataset.ready = "true";
-  });

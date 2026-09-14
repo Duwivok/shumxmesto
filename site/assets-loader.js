@@ -4,8 +4,6 @@ const DIGIT_ASSET_URLS = Object.freeze(
   ),
 );
 
-const preloadRequests = new Map();
-
 function prepareImage(image) {
   image.alt = "";
   image.decoding = "async";
@@ -61,21 +59,4 @@ export function digitAssetUrl(digit) {
 
 export function loadDigitAsset(image, digit) {
   return loadImageAsset(image, digitAssetUrl(digit));
-}
-
-export function preloadImageAsset(source) {
-  if (preloadRequests.has(source)) {
-    return preloadRequests.get(source);
-  }
-
-  const image = new Image();
-  prepareImage(image);
-  image.src = source;
-  const request = waitForImage(image);
-  preloadRequests.set(source, request);
-  return request;
-}
-
-export function preloadDigitAssets() {
-  return Promise.allSettled(DIGIT_ASSET_URLS.map(preloadImageAsset));
 }

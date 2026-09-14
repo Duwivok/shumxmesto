@@ -1,10 +1,9 @@
 import {
   loadDigitAsset,
   loadImageAsset,
-  preloadDigitAssets,
-} from "./assets-loader.js?v=20260914words1";
+} from "./assets-loader.js?v=20260914cold1";
 import { PerspectiveLayout } from "./perspective.js?v=20260914spill1";
-import { timerWord, preloadWordAssets } from "./timer-words.js?v=20260914words1";
+import { timerWord } from "./timer-words.js?v=20260914cold1";
 
 export const COUNTDOWN_CONFIG = Object.freeze({
   // No timezone suffix means device-local time. Change this one value when the
@@ -38,14 +37,6 @@ async function decodedImage(request) {
   return image;
 }
 
-function runWhenIdle(callback) {
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(callback, { timeout: 2000 });
-  } else {
-    window.setTimeout(callback, 0);
-  }
-}
-
 class CountdownTimer {
   constructor(root, config) {
     this.root = root;
@@ -77,10 +68,6 @@ class CountdownTimer {
     document.addEventListener("visibilitychange", this.handleVisibilityChange);
 
     this.updateCountdown();
-    runWhenIdle(() => {
-      preloadDigitAssets();
-      preloadWordAssets();
-    });
   }
 
   updateScreen(name, value) {

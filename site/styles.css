@@ -480,10 +480,6 @@ button {
   outline-offset: 4px;
 }
 
-.app[data-ready="false"] .navigation-buttons {
-  pointer-events: none;
-}
-
 @keyframes nav-crush-1b {
   0% {
     clip-path: polygon(0% 0%, 50% 0%, 100% 0%, 100% 50%, 100% 100%, 50% 100%, 0% 100%, 0% 50%);

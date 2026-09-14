@@ -1,5 +1,3 @@
-import { preloadImageAsset } from "./assets-loader.js?v=20260914words1";
-
 const WORDS = Object.freeze(Object.fromEntries([
   ["days", [["den", "день"], ["dnya", "дня"], ["dney", "дней"]]],
   ["hours", [["chas", "час"], ["chasa", "часа"], ["chasov", "часов"]]],
@@ -16,10 +14,4 @@ export function timerWord(unit, value) {
     ? 2
     : last === 1 ? 0 : last >= 2 && last <= 4 ? 1 : 2;
   return WORDS[unit][form];
-}
-
-export function preloadWordAssets() {
-  return Promise.allSettled(Object.values(WORDS).flat().map(
-    ({ source }) => preloadImageAsset(source),
-  ));
 }

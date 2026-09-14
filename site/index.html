@@ -6,31 +6,38 @@
     <meta name="theme-color" content="#000000" />
     <title>SHÜM</title>
 
-    <link rel="preload" as="image" href="backgrounds/home.png?v=9d1596f35f" />
-    <link rel="preload" as="image" href="backgrounds/lineup.png?v=e0cb8737cd" />
-    <link rel="preload" as="image" href="backgrounds/bar.png?v=027f2cc6c5" />
-    <link rel="preload" as="image" href="backgrounds/rsvp.png?v=6c1d899676" />
-    <link rel="preload" as="image" href="cat.jpg?v=919838aa23" />
-    <link rel="preload" as="image" href="navigation/nav-1b-geo.png" />
-    <link rel="preload" as="image" href="navigation/nav-1b-lineup.png" />
-    <link rel="preload" as="image" href="navigation/nav-1b-shum.png" />
-    <link rel="preload" as="image" href="navigation/nav-1b-rsvp.png" />
-    <link rel="preload" as="image" href="navigation/nav-1b-bar.png" />
-    <link rel="preload" as="image" href="video-poster.png" />
-    <link rel="preload" as="image" href="cigarette-idle-intro.webp?v=688799a7" />
-    <link rel="preload" as="image" href="cigarette-idle-preview.webp?v=7203645e" />
-    <link rel="stylesheet" href="styles.css?v=20260914carousel1" />
+    <script>
+      (() => {
+        const sources = {
+          home: "backgrounds/home.png?v=9d1596f35f",
+          lineup: "backgrounds/lineup.png?v=e0cb8737cd",
+          bar: "backgrounds/bar.png?v=027f2cc6c5",
+          rsvp: "backgrounds/rsvp.png?v=6c1d899676",
+          geo: "cat.jpg?v=919838aa23",
+        };
+        const requestedPage = window.location.hash.slice(1).toLowerCase();
+        const initialPage = Object.prototype.hasOwnProperty.call(sources, requestedPage)
+          ? requestedPage
+          : "home";
+        const preload = document.createElement("link");
+        preload.rel = "preload";
+        preload.as = "image";
+        preload.href = sources[initialPage];
+        preload.fetchPriority = "high";
+        document.head.append(preload);
+      })();
+    </script>
+    <link rel="stylesheet" href="styles.css?v=20260914cold1" />
   </head>
   <body>
-    <main class="app" data-app data-page="home" data-ready="false">
+    <main class="app" data-app data-page="loading">
       <div class="scene" aria-live="polite">
-        <!-- Keeping every screen mounted makes switching instant and flash-free. -->
         <div class="backgrounds" aria-hidden="true">
-          <img class="background is-active" data-background="home" src="backgrounds/home.png?v=9d1596f35f" alt="" />
-          <img class="background" data-background="lineup" src="backgrounds/lineup.png?v=e0cb8737cd" alt="" />
-          <img class="background" data-background="bar" src="backgrounds/bar.png?v=027f2cc6c5" alt="" />
-          <img class="background" data-background="rsvp" src="backgrounds/rsvp.png?v=6c1d899676" alt="" />
-          <img class="background" data-background="geo" src="cat.jpg?v=919838aa23" alt="" />
+          <img class="background" data-background="home" data-src="backgrounds/home.png?v=9d1596f35f" width="1560" height="2880" decoding="async" alt="" />
+          <img class="background" data-background="lineup" data-src="backgrounds/lineup.png?v=e0cb8737cd" width="1560" height="2880" decoding="async" alt="" />
+          <img class="background" data-background="bar" data-src="backgrounds/bar.png?v=027f2cc6c5" width="1560" height="2880" decoding="async" alt="" />
+          <img class="background" data-background="rsvp" data-src="backgrounds/rsvp.png?v=6c1d899676" width="1560" height="2880" decoding="async" alt="" />
+          <img class="background" data-background="geo" data-src="cat.jpg?v=919838aa23" width="400" height="400" decoding="async" alt="" />
         </div>
 
         <div class="timer-system" data-countdown data-effects="on" role="timer" aria-live="off">
@@ -38,8 +45,8 @@
             class="timer-screen-backgrounds"
             data-timer-background-video
             data-src="timer-backgrounds-v1/web/timer-backgrounds.webm"
-            poster="timer-backgrounds-v1/preview/poster-all.png"
-            preload="auto"
+            data-poster="timer-backgrounds-v1/preview/poster-all.png"
+            preload="none"
             autoplay
             loop
             muted
@@ -145,7 +152,11 @@
           <span class="rsvp-cigarette-media">
             <img
               class="rsvp-cigarette-poster"
-              src="video-poster.png"
+              data-cigarette-poster
+              data-src="video-poster.png"
+              width="1000"
+              height="1000"
+              decoding="async"
               alt=""
               draggable="false"
             />
@@ -154,6 +165,9 @@
               data-cigarette-idle
               data-intro-src="cigarette-idle-intro.webp?v=688799a7"
               data-loop-src="cigarette-idle-preview.webp?v=7203645e"
+              width="960"
+              height="540"
+              decoding="async"
               alt=""
               draggable="false"
             />
@@ -161,6 +175,9 @@
               class="rsvp-cigarette-animation"
               data-cigarette-image
               data-src="cigarette-animation.webp?v=01982b4d"
+              width="960"
+              height="540"
+              decoding="async"
               alt=""
               draggable="false"
             />
@@ -185,7 +202,7 @@
                 <button class="nav-button" type="button" data-target="geo" aria-label="Гео" tabindex="-1">
                   <span class="nav-button-motion">
                     <span class="nav-button-sway">
-                      <img class="nav-button-art" src="navigation/nav-1b-geo.png" alt="" draggable="false" />
+                      <img class="nav-button-art" src="navigation/nav-1b-geo.png" width="334" height="276" decoding="async" alt="" draggable="false" />
                     </span>
                   </span>
                 </button>
@@ -194,7 +211,7 @@
                 <button class="nav-button" type="button" data-target="lineup" aria-label="Лайн-ап" tabindex="-1">
                   <span class="nav-button-motion">
                     <span class="nav-button-sway nav-button-sway--reverse">
-                      <img class="nav-button-art" src="navigation/nav-1b-lineup.png" alt="" draggable="false" />
+                      <img class="nav-button-art" src="navigation/nav-1b-lineup.png" width="415" height="276" decoding="async" alt="" draggable="false" />
                     </span>
                   </span>
                 </button>
@@ -203,7 +220,7 @@
                 <button class="nav-button" type="button" data-target="home" aria-label="SHÜM — главная" aria-current="page">
                   <span class="nav-button-motion">
                     <span class="nav-button-sway">
-                      <img class="nav-button-art" src="navigation/nav-1b-shum.png" alt="" draggable="false" />
+                      <img class="nav-button-art" src="navigation/nav-1b-shum.png" width="460" height="460" decoding="async" alt="" draggable="false" />
                     </span>
                   </span>
                 </button>
@@ -212,7 +229,7 @@
                 <button class="nav-button" type="button" data-target="rsvp" aria-label="RSVP" tabindex="-1">
                   <span class="nav-button-motion">
                     <span class="nav-button-sway nav-button-sway--reverse">
-                      <img class="nav-button-art" src="navigation/nav-1b-rsvp.png" alt="" draggable="false" />
+                      <img class="nav-button-art" src="navigation/nav-1b-rsvp.png" width="313" height="276" decoding="async" alt="" draggable="false" />
                     </span>
                   </span>
                 </button>
@@ -221,7 +238,7 @@
                 <button class="nav-button" type="button" data-target="bar" aria-label="Бар" tabindex="-1">
                   <span class="nav-button-motion">
                     <span class="nav-button-sway">
-                      <img class="nav-button-art" src="navigation/nav-1b-bar.png" alt="" draggable="false" />
+                      <img class="nav-button-art" src="navigation/nav-1b-bar.png" width="276" height="276" decoding="async" alt="" draggable="false" />
                     </span>
                   </span>
                 </button>
@@ -232,6 +249,6 @@
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260914carousel1"></script>
+    <script type="module" src="app.js?v=20260914cold1"></script>
   </body>
 </html>
