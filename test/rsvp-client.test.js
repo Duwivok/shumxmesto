@@ -164,6 +164,25 @@ test("missing channel configuration does not count a vote", async () => {
   assert.deepEqual(context.opened, []);
 });
 
+test("preview mode plays the animation without storage, request, or redirect", async () => {
+  let storageWasRead = false;
+  const context = setup({
+    enabled: false,
+    channelUrl: CHANNEL_URL,
+    getStorage: () => {
+      storageWasRead = true;
+      return memoryStorage();
+    },
+  });
+  const result = await context.controller.activate();
+
+  assert.deepEqual(result, { ok: false, reason: "preview-disabled" });
+  assert.equal(context.animationCount(), 1);
+  assert.equal(storageWasRead, false);
+  assert.equal(context.requests.length, 0);
+  assert.deepEqual(context.opened, []);
+});
+
 test("clearing local storage and reloading permits a new random attempt", async () => {
   const storage = memoryStorage();
   const first = setup({ storage });

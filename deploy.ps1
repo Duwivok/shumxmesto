@@ -129,7 +129,8 @@ try {
     }
 
     Write-Host "GitHub source push completed: $pushedCommit"
-    Write-Host "GitHub Pages is disabled. Deploy /opt/shum to Timeweb separately."
+    Write-Host "GitHub Pages visual preview will update with RSVP disabled."
+    Write-Host "Deploy the production Node.js service to /opt/shum on Timeweb separately."
 }
 finally {
     Pop-Location

@@ -52,6 +52,7 @@ export function createRsvpController({
   endpoint,
   storageKey,
   channelUrl,
+  enabled = true,
   getStorage,
   fetchRequest,
   cryptoProvider,
@@ -183,6 +184,11 @@ export function createRsvpController({
     const animation = Promise.resolve()
       .then(() => playAnimation())
       .catch(() => undefined);
+
+    if (!enabled) {
+      await animation;
+      return { ok: false, reason: "preview-disabled" };
+    }
 
     if (!isTelegramChannelUrl(channelUrl)) {
       await animation;

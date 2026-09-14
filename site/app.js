@@ -1,8 +1,8 @@
 import { initCountdownTimer } from "./timer.js?v=20260914cold1";
 import { initTimerScreenBackground } from "./timer-background.js?v=20260913background1";
 import { initNavigation } from "./navigation.js?v=20260914focus1";
-import { RSVP_CONFIG } from "./rsvp-config.js?v=20260914rsvp1";
-import { createRsvpController } from "./rsvp.js?v=20260914rsvp1";
+import { RSVP_CONFIG } from "./rsvp-config.js?v=20260914preview1";
+import { createRsvpController } from "./rsvp.js?v=20260914preview1";
 
 const PAGES = new Set(["home", "lineup", "bar", "rsvp", "geo"]);
 
@@ -545,6 +545,7 @@ function initTimerGlow() {
 
 const rsvpController = createRsvpController({
   ...RSVP_CONFIG,
+  enabled: !RSVP_CONFIG.previewHostnames.includes(window.location.hostname),
   getStorage: () => window.localStorage,
   fetchRequest: (...argumentsList) => window.fetch(...argumentsList),
   cryptoProvider: window.crypto,
@@ -565,9 +566,11 @@ cigaretteButton.addEventListener("click", async () => {
   if (!result.ok) {
     cigaretteButton.setAttribute(
       "aria-label",
-      result.reason === "channel-not-configured"
-        ? "Ссылка на Telegram-канал пока не настроена"
-        : "Не удалось подтвердить участие. Нажмите ещё раз, чтобы повторить",
+      result.reason === "preview-disabled"
+        ? "Предварительный просмотр: подтверждение участия отключено"
+        : result.reason === "channel-not-configured"
+          ? "Ссылка на Telegram-канал пока не настроена"
+          : "Не удалось подтвердить участие. Нажмите ещё раз, чтобы повторить",
     );
   } else {
     cigaretteButton.setAttribute("aria-label", cigaretteDefaultLabel);
