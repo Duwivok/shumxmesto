@@ -1,8 +1,10 @@
 import { initCountdownTimer } from "./timer.js?v=20260914cold1";
 import { initTimerScreenBackground } from "./timer-background.js?v=20260915allwebp1";
 import { initNavigation } from "./navigation.js?v=20260914focus1";
-import { RSVP_CONFIG } from "./rsvp-config.js?v=20260914preview1";
+import { RSVP_CONFIG } from "./rsvp-config.js?v=20260915count1";
 import { createRsvpController } from "./rsvp.js?v=20260914preview1";
+import { createRsvpCountController } from "./rsvp-count.js?v=20260915count1";
+import { digitAssetUrl } from "./assets-loader.js?v=20260914cold1";
 
 const PAGES = new Set(["home", "lineup", "bar", "rsvp", "geo"]);
 
@@ -26,6 +28,8 @@ const cigaretteIdleVideo = document.querySelector("[data-cigarette-idle-video]")
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
 const cigaretteVideo = document.querySelector("[data-cigarette-video]");
 const cigaretteDefaultLabel = cigaretteButton.getAttribute("aria-label");
+const rsvpCount = document.querySelector("[data-rsvp-count]");
+const rsvpCountDigits = [...document.querySelectorAll("[data-rsvp-count-digit]")];
 const timerBackgroundImage = document.querySelector("[data-timer-background-image]");
 let countdownTimer = null;
 const timerScreenBackground = initTimerScreenBackground(timerBackgroundImage);
@@ -810,11 +814,33 @@ const rsvpController = createRsvpController({
   openChannel: (url) => window.location.assign(url),
 });
 
+function renderRsvpCount(value) {
+  [...value].forEach((character, position) => {
+    const image = rsvpCountDigits[position];
+    const source = digitAssetUrl(Number(character));
+    if (image.dataset.assetSource !== source) {
+      image.dataset.assetSource = source;
+      image.src = source;
+    }
+  });
+  rsvpCount.setAttribute("aria-label", `Подтвердили участие: ${value}`);
+}
+
+const rsvpCountController = createRsvpCountController({
+  endpoint: RSVP_CONFIG.countEndpoint,
+  storageKey: RSVP_CONFIG.countStorageKey,
+  getStorage: () => window.localStorage,
+  fetchRequest: (...argumentsList) => window.fetch(...argumentsList),
+  renderCount: renderRsvpCount,
+});
+rsvpCountController.load();
+
 cigaretteButton.addEventListener("click", async () => {
   if (rsvpController.isInFlight()) {
     return;
   }
 
+  rsvpCountController.freeze();
   cigaretteButton.setAttribute("aria-label", cigaretteDefaultLabel);
   cigaretteButton.setAttribute("aria-busy", "true");
   const result = await rsvpController.activate();

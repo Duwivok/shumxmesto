@@ -180,6 +180,21 @@ test("the same server serves the frontend without cookies", async (testContext) 
   assert.equal(burnImage.headers.get("content-type"), "image/webp");
 });
 
+test("the public count endpoint returns the current aggregate without caching", async (testContext) => {
+  const fixture = await serverFixture(testContext);
+  const initial = await fetch(`${fixture.baseUrl}/api/rsvp-count`);
+  await postVote(fixture.baseUrl, { voteId: VOTE_ID });
+  const updated = await fetch(`${fixture.baseUrl}/api/rsvp-count`);
+  const rejected = await fetch(`${fixture.baseUrl}/api/rsvp-count`, { method: "POST" });
+
+  assert.deepEqual(await initial.json(), { ok: true, count: 0 });
+  assert.deepEqual(await updated.json(), { ok: true, count: 1 });
+  assert.equal(updated.headers.get("cache-control"), "no-store");
+  assert.equal(updated.headers.get("set-cookie"), null);
+  assert.equal(rejected.status, 405);
+  assert.equal(rejected.headers.get("allow"), "GET");
+});
+
 test("cigarette WebP animations preserve alpha and authored loop behavior", () => {
   const animations = [
     { file: "sig-prew.webp", loop: 0 },

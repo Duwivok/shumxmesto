@@ -1,6 +1,8 @@
 export const RSVP_CONFIG = Object.freeze({
   endpoint: "/api/rsvp",
   storageKey: "shum:rsvp:2026-09-19:v1",
+  countEndpoint: "/api/rsvp-count",
+  countStorageKey: "shum:rsvp-count:2026-09-19:v1",
 
   // GitHub Pages is a visual preview only. RSVP stays disabled there even
   // after channelUrl is filled for the production Timeweb deployment.

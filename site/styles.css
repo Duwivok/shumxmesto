@@ -428,9 +428,49 @@ button {
   opacity: 1;
 }
 
-.rsvp-cigarette {
+.rsvp-count {
   position: absolute;
   z-index: 1;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.app[data-page="rsvp"] .rsvp-count {
+  visibility: visible;
+}
+
+.rsvp-count-digit {
+  position: absolute;
+  top: 44.4444%;
+  display: block;
+  width: 4.4872%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.rsvp-count-digit:nth-child(1) {
+  left: 27.6923%;
+}
+
+.rsvp-count-digit:nth-child(2) {
+  left: 32.5641%;
+}
+
+.rsvp-count-digit:nth-child(3) {
+  left: 37.3718%;
+}
+
+.rsvp-count-digit:nth-child(4) {
+  left: 42.2436%;
+}
+
+.rsvp-cigarette {
+  position: absolute;
+  z-index: 2;
   top: 34%;
   left: 0;
   width: 100%;

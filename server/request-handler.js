@@ -165,6 +165,17 @@ export function createRequestHandler({
   return async function handleRequest(request, response) {
     try {
       const url = new URL(request.url, publicOrigin);
+
+      if (url.pathname === "/api/rsvp-count" && url.search === "") {
+        if (request.method !== "GET") {
+          request.resume();
+          sendJson(response, 405, { ok: false }, { Allow: "GET" });
+          return;
+        }
+        sendJson(response, 200, { ok: true, count: storage.getCount() });
+        return;
+      }
+
       if (url.pathname !== "/api/rsvp" || url.search !== "") {
         await serveStatic(request, response, staticRoot, url.pathname);
         return;
