@@ -140,12 +140,12 @@ button {
   height: 29.377%;
 }
 
-.bar-cocktail--nastoika .bar-cocktail-animation,
-.bar-cocktail--nastoika .bar-cocktail-video {
-  top: 22.686%;
+.bar-cocktail--pour .bar-cocktail-animation,
+.bar-cocktail--pour .bar-cocktail-video {
+  top: 11.364%;
   left: 48.654%;
   width: 46.154%;
-  height: 20.316%;
+  height: 31.716%;
 }
 
 .bar-cocktail[data-animation-format="image"].is-playing .bar-cocktail-animation,

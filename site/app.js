@@ -63,8 +63,8 @@ let cigaretteAnimationFormat = supportsWebmVideo(cigaretteIdleVideo)
   ? "video"
   : "image";
 
-barVideos.forEach((video) => {
-  video.closest("[data-bar-cocktail]")?.setAttribute("data-animation-format", barAnimationFormat);
+barAnimationImages.forEach((image) => {
+  image.closest("[data-bar-cocktail]")?.setAttribute("data-animation-format", barAnimationFormat);
 });
 cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
 
