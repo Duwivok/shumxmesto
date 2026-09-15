@@ -33,23 +33,22 @@ let timerGlowInitialized = false;
 let pageRequestId = 0;
 let cigarettePlaybackId = 0;
 let cigaretteResetTimer = 0;
-let cigaretteIdleLoopTimer = 0;
 let cigaretteHasBeenPressed = false;
-let cigaretteIdleIntroHasStarted = false;
+let cigaretteIdleImageReadyPromise = null;
 let cigaretteIdleVideoReadyPromise = null;
 let cigaretteAnimationReadyPromise = null;
 let cigaretteIdleVideoObjectUrl = "";
 let cigaretteAnimationVideoObjectUrl = "";
 let cigaretteIdleStarting = false;
+let cigaretteIdleImagePlaybackId = 0;
 let barImagesReadyPromise = null;
 let barAnimationImagesReadyPromise = null;
 let barVideosPrepared = false;
 let geoLockAssetsPromise = null;
 let animatedImagePlaybackId = 0;
 
-const CIGARETTE_IMAGE_ANIMATION_DURATION = 4000;
+const CIGARETTE_IMAGE_ANIMATION_DURATION = 3000;
 const CIGARETTE_VIDEO_ANIMATION_DURATION = 3000;
-const CIGARETTE_IDLE_INTRO_DURATION = 2300;
 const CIGARETTE_VIDEO_END_GRACE = 1000;
 
 function supportsWebmVideo(video) {
@@ -58,10 +57,7 @@ function supportsWebmVideo(video) {
 }
 
 const barAnimationFormat = "image";
-let cigaretteAnimationFormat = supportsWebmVideo(cigaretteIdleVideo)
-  && supportsWebmVideo(cigaretteVideo)
-  ? "video"
-  : "image";
+let cigaretteAnimationFormat = "image";
 
 barAnimationImages.forEach((image) => {
   image.closest("[data-bar-cocktail]")?.setAttribute("data-animation-format", barAnimationFormat);
@@ -147,6 +143,35 @@ async function loadCigaretteVideo(video, source) {
   }
 
   return objectUrl;
+}
+
+function prepareCigaretteIdleImage() {
+  if (cigaretteIdleImageReadyPromise) {
+    return cigaretteIdleImageReadyPromise;
+  }
+
+  const preparation = (async () => {
+    const image = new Image();
+    image.decoding = "async";
+    image.fetchPriority = "high";
+    image.src = cigaretteIdleImage.dataset.src;
+    await imageReady(image);
+    try {
+      await image.decode?.();
+    } catch (error) {
+      // Some WebKit versions animate WebP correctly but reject decode().
+      console.debug("The cigarette preview is loaded but was not pre-decoded", error);
+    }
+  })();
+
+  const readyPromise = preparation.catch((error) => {
+    if (cigaretteIdleImageReadyPromise === readyPromise) {
+      cigaretteIdleImageReadyPromise = null;
+    }
+    throw error;
+  });
+  cigaretteIdleImageReadyPromise = readyPromise;
+  return cigaretteIdleImageReadyPromise;
 }
 
 function prepareCigaretteIdleVideo() {
@@ -277,8 +302,6 @@ function waitForCigaretteVideoEnd(playbackId) {
 }
 
 function stopCigaretteIdle({ discard = false } = {}) {
-  window.clearTimeout(cigaretteIdleLoopTimer);
-  cigaretteIdleLoopTimer = 0;
   cigaretteIdleImage.onload = null;
   cigaretteIdleImage.onerror = null;
   cigaretteIdleVideo.pause();
@@ -287,22 +310,6 @@ function stopCigaretteIdle({ discard = false } = {}) {
   if (discard) {
     cigaretteIdleImage.removeAttribute("src");
   }
-}
-
-function startCigaretteIdleLoop() {
-  if (cigaretteHasBeenPressed || app.dataset.page !== "rsvp") {
-    return;
-  }
-
-  cigaretteIdleImage.onload = () => {
-    cigaretteIdleImage.onload = null;
-
-    if (!cigaretteHasBeenPressed && app.dataset.page === "rsvp") {
-      cigaretteButton.classList.add("is-idle");
-    }
-  };
-  cigaretteIdleImage.onerror = () => stopCigaretteIdle({ discard: true });
-  cigaretteIdleImage.src = cigaretteIdleImage.dataset.loopSrc;
 }
 
 function startCigaretteIdle() {
@@ -354,38 +361,40 @@ function startCigaretteIdle() {
     return;
   }
 
+  if (cigaretteIdleStarting) {
+    return;
+  }
+
   if (cigaretteIdleImage.hasAttribute("src")) {
     cigaretteButton.classList.add("is-idle");
     return;
   }
 
-  const showIntro = !cigaretteIdleIntroHasStarted;
-  cigaretteIdleIntroHasStarted = true;
-
-  cigaretteIdleImage.onload = () => {
-    cigaretteIdleImage.onload = null;
-
-    if (!cigaretteHasBeenPressed && app.dataset.page === "rsvp") {
-      cigaretteButton.classList.add("is-idle");
-
-      if (showIntro) {
-        cigaretteIdleLoopTimer = window.setTimeout(() => {
-          cigaretteIdleLoopTimer = 0;
-          startCigaretteIdleLoop();
-        }, CIGARETTE_IDLE_INTRO_DURATION);
+  cigaretteIdleStarting = true;
+  prepareCigaretteIdleImage()
+    .then(async () => {
+      if (
+        cigaretteAnimationFormat !== "image"
+        || cigaretteHasBeenPressed
+        || document.hidden
+        || app.dataset.page !== "rsvp"
+      ) {
+        return;
       }
-    }
-  };
-  cigaretteIdleImage.onerror = () => {
-    if (showIntro) {
-      startCigaretteIdleLoop();
-    } else {
+
+      cigaretteIdleImage.src = `${cigaretteIdleImage.dataset.src}#play-${++cigaretteIdleImagePlaybackId}`;
+      await imageReady(cigaretteIdleImage);
+      if (!cigaretteHasBeenPressed && !document.hidden && app.dataset.page === "rsvp") {
+        cigaretteButton.classList.add("is-idle");
+      }
+    })
+    .catch((error) => {
       stopCigaretteIdle({ discard: true });
-    }
-  };
-  cigaretteIdleImage.src = showIntro
-    ? cigaretteIdleImage.dataset.introSrc
-    : cigaretteIdleImage.dataset.loopSrc;
+      console.warn("Could not play the cigarette preview", error);
+    })
+    .finally(() => {
+      cigaretteIdleStarting = false;
+    });
 }
 
 function syncCigaretteIdlePlayback() {

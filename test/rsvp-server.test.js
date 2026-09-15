@@ -161,15 +161,42 @@ test("the same server serves the frontend without cookies", async (testContext) 
   assert.match(html, /data-cigarette-idle-video/);
   assert.match(html, /3\/sig-prew\.webm/);
   assert.match(html, /3\/sig-burn\.webm/);
+  assert.match(html, /3\/sig-prew\.webp/);
+  assert.match(html, /3\/sig-burn\.webp/);
 
-  const [preview, burn] = await Promise.all([
+  const [preview, burn, previewImage, burnImage] = await Promise.all([
     fetch(`${fixture.baseUrl}/3/sig-prew.webm`),
     fetch(`${fixture.baseUrl}/3/sig-burn.webm`),
+    fetch(`${fixture.baseUrl}/3/sig-prew.webp`),
+    fetch(`${fixture.baseUrl}/3/sig-burn.webp`),
   ]);
   assert.equal(preview.status, 200);
   assert.equal(preview.headers.get("content-type"), "video/webm");
   assert.equal(burn.status, 200);
   assert.equal(burn.headers.get("content-type"), "video/webm");
+  assert.equal(previewImage.status, 200);
+  assert.equal(previewImage.headers.get("content-type"), "image/webp");
+  assert.equal(burnImage.status, 200);
+  assert.equal(burnImage.headers.get("content-type"), "image/webp");
+});
+
+test("cigarette WebP animations preserve alpha and authored loop behavior", () => {
+  const animations = [
+    { file: "sig-prew.webp", loop: 0 },
+    { file: "sig-burn.webp", loop: 1 },
+  ];
+
+  for (const animation of animations) {
+    const data = fs.readFileSync(path.join(projectRoot, "site", "3", animation.file));
+    const vp8xOffset = data.indexOf("VP8X", 0, "ascii");
+    const animOffset = data.indexOf("ANIM", 0, "ascii");
+
+    assert.notEqual(vp8xOffset, -1);
+    assert.notEqual(animOffset, -1);
+    assert.equal(data[vp8xOffset + 8] & 0x12, 0x12);
+    assert.equal(data.readUInt16LE(animOffset + 12), animation.loop);
+    assert.equal(data.toString("latin1").match(/ANMF/g)?.length, 90);
+  }
 });
 
 test("the public client does not contain Telegram secrets or profile access", () => {
