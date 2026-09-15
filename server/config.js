@@ -49,8 +49,8 @@ export function loadConfig(environment = process.env, { requireTelegram = true }
     telegramBotToken: requireTelegram
       ? required(environment.TELEGRAM_BOT_TOKEN, "TELEGRAM_BOT_TOKEN")
       : "",
-    telegramOrganizerChatId: requireTelegram
-      ? required(environment.TELEGRAM_ORGANIZER_CHAT_ID, "TELEGRAM_ORGANIZER_CHAT_ID")
+    telegramGroupChatId: requireTelegram
+      ? required(environment.TELEGRAM_GROUP_CHAT_ID, "TELEGRAM_GROUP_CHAT_ID")
       : "",
   });
 }

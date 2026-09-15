@@ -2,11 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createTelegramNotifier } from "../server/telegram.js";
 
-test("the organizer notification contains only its destination and +1", async () => {
+test("the group notification contains only its destination and +1", async () => {
   let captured;
   const notifier = createTelegramNotifier({
     botToken: "server-only-test-token",
-    organizerChatId: "organizer-chat",
+    groupChatId: "-1001234567890",
     fetchRequest: async (url, options) => {
       captured = { url, options };
       return {
@@ -22,7 +22,7 @@ test("the organizer notification contains only its destination and +1", async ()
     "https://api.telegram.org/botserver-only-test-token/sendMessage",
   );
   assert.deepEqual(JSON.parse(captured.options.body), {
-    chat_id: "organizer-chat",
+    chat_id: "-1001234567890",
     text: "+1",
     disable_notification: false,
     protect_content: true,

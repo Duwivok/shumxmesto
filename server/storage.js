@@ -23,6 +23,13 @@ export function openRsvpStorage(databasePath) {
       notification_claimed INTEGER NOT NULL DEFAULT 0
         CHECK (notification_claimed IN (0, 1))
     ) STRICT, WITHOUT ROWID;
+
+    CREATE TABLE IF NOT EXISTS app_state (
+      singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+      geo_hidden INTEGER NOT NULL CHECK (geo_hidden IN (0, 1))
+    ) STRICT;
+
+    INSERT OR IGNORE INTO app_state (singleton, geo_hidden) VALUES (1, 1);
   `);
 
   const insertVote = database.prepare(
@@ -39,6 +46,12 @@ export function openRsvpStorage(databasePath) {
     SET notification_claimed = 1
     WHERE vote_id = ? AND notification_claimed = 0
   `);
+  const readGeoState = database.prepare(
+    "SELECT geo_hidden FROM app_state WHERE singleton = 1",
+  );
+  const updateGeoState = database.prepare(
+    "UPDATE app_state SET geo_hidden = ? WHERE singleton = 1",
+  );
 
   function recordVote(voteId) {
     database.exec("BEGIN IMMEDIATE");
@@ -63,6 +76,13 @@ export function openRsvpStorage(databasePath) {
     },
     getCount() {
       return readCounter.get().total;
+    },
+    isGeoHidden() {
+      return readGeoState.get().geo_hidden === 1;
+    },
+    setGeoHidden(hidden) {
+      updateGeoState.run(hidden ? 1 : 0);
+      return hidden;
     },
     finalizeEvent() {
       database.exec("BEGIN IMMEDIATE");

@@ -15,7 +15,7 @@ try {
 const storage = openRsvpStorage(config.databasePath);
 const notifier = createTelegramNotifier({
   botToken: config.telegramBotToken,
-  organizerChatId: config.telegramOrganizerChatId,
+  groupChatId: config.telegramGroupChatId,
 });
 const handler = createRequestHandler({
   staticRoot: config.staticRoot,

@@ -1,6 +1,6 @@
 export function createTelegramNotifier({
   botToken,
-  organizerChatId,
+  groupChatId,
   fetchRequest = globalThis.fetch,
   timeoutMs = 5000,
 }) {
@@ -16,7 +16,7 @@ export function createTelegramNotifier({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              chat_id: organizerChatId,
+              chat_id: groupChatId,
               text: "+1",
               disable_notification: false,
               protect_content: true,

@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node server/index.js",
+    "admin-publisher": "node bot/scripts/admin-publisher.js",
     "test": "node --test",
     "finalize-event": "node server/scripts/finalize-event.js"
   }

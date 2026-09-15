@@ -15,7 +15,6 @@ const barAnimationImages = [...document.querySelectorAll("[data-bar-animation-im
 const barVideos = [...document.querySelectorAll("[data-bar-video]")];
 const geoLockOverlay = document.querySelector("[data-geo-lock-overlay]");
 const geoLockImage = document.querySelector("[data-geo-lock-image]");
-const geoEyeToggle = document.querySelector("[data-geo-eye-toggle]");
 const geoHints = document.querySelector("[data-geo-hints]");
 const geoHintBackdrop = document.querySelector("[data-geo-hint-backdrop]");
 const geoHintPhone = document.querySelector("[data-geo-hint-phone]");
@@ -53,6 +52,7 @@ let barImagesReadyPromise = null;
 let barAnimationImagesReadyPromise = null;
 let barVideosPrepared = false;
 let geoLockAssetsPromise = null;
+let geoStateRequestId = 0;
 let geoHintAssetsPromise = null;
 let geoHintLastTrigger = null;
 let animatedImagePlaybackId = 0;
@@ -672,6 +672,47 @@ function prepareGeoLockAssets() {
   return geoLockAssetsPromise;
 }
 
+function applyGeoState(hidden) {
+  if (hidden) {
+    closeGeoHint({ restoreFocus: false });
+  }
+  app.dataset.geoLocked = String(hidden);
+  geoLockOverlay.setAttribute("aria-hidden", String(!hidden));
+  if (!hidden && app.dataset.page === "geo") {
+    prepareGeoHintAssets().catch((error) => console.error("Could not preload Geo hints", error));
+  }
+  syncGeoHintAvailability();
+}
+
+async function refreshGeoState() {
+  const requestId = ++geoStateRequestId;
+  let hidden = true;
+  try {
+    const response = await fetch("/api/geo-state", {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    });
+    const result = await response.json();
+    if (!response.ok || typeof result.hidden !== "boolean") {
+      throw new Error("Invalid Geo state response");
+    }
+    hidden = result.hidden;
+  } catch (error) {
+    console.warn("Could not refresh the Geo state; keeping the blur enabled", error);
+  }
+
+  if (hidden) {
+    try {
+      await prepareGeoLockAssets();
+    } catch (error) {
+      console.error("Could not load the locked Geo view", error);
+    }
+  }
+  if (requestId === geoStateRequestId) {
+    applyGeoState(hidden);
+  }
+}
+
 function geoHintsAreAvailable() {
   return app.dataset.page === "geo" && app.dataset.geoLocked !== "true";
 }
@@ -775,7 +816,12 @@ async function showPage(page, { updateUrl = true } = {}) {
   const background = backgrounds.find((item) => item.dataset.background === nextPage);
   const pageAssets = nextPage === "bar"
     ? [prepareBarImages()]
-    : [loadDecodedImage(background, background.dataset.src, { highPriority: true })];
+    : nextPage === "geo"
+      ? [
+          loadDecodedImage(background, background.dataset.src, { highPriority: true }),
+          refreshGeoState(),
+        ]
+      : [loadDecodedImage(background, background.dataset.src, { highPriority: true })];
 
   if (navigationUnderlay?.dataset.navigationUnderlay === nextPage) {
     pageAssets.push(
@@ -970,28 +1016,16 @@ window.addEventListener("hashchange", () => showPage(pageFromHash(), { updateUrl
 document.addEventListener("visibilitychange", syncTimerGlowPlayback);
 document.addEventListener("visibilitychange", syncBarPlayback);
 document.addEventListener("visibilitychange", syncCigaretteIdlePlayback);
-
-geoEyeToggle.addEventListener("click", async () => {
-  const locked = app.dataset.geoLocked !== "true";
-  if (locked) {
-    try {
-      await prepareGeoLockAssets();
-    } catch (error) {
-      console.error("Could not load the locked Geo preview", error);
-      return;
-    }
+document.addEventListener("visibilitychange", () => {
+  if (app.dataset.page === "geo" && !document.hidden) {
+    void refreshGeoState();
   }
-  if (locked) {
-    closeGeoHint({ restoreFocus: false });
-  }
-  app.dataset.geoLocked = String(locked);
-  geoLockOverlay.setAttribute("aria-hidden", String(!locked));
-  geoEyeToggle.setAttribute("aria-pressed", String(locked));
-  geoEyeToggle.setAttribute(
-    "aria-label",
-    locked ? "Показать открытую версию Гео" : "Показать закрытую версию Гео",
-  );
-  syncGeoHintAvailability();
 });
+
+window.setInterval(() => {
+  if (app.dataset.page === "geo" && !document.hidden) {
+    void refreshGeoState();
+  }
+}, 10_000);
 
 showPage(pageFromHash(), { updateUrl: false });

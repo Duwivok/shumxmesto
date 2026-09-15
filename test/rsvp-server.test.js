@@ -195,6 +195,20 @@ test("the public count endpoint returns the current aggregate without caching", 
   assert.equal(rejected.headers.get("allow"), "GET");
 });
 
+test("the public Geo state defaults to blur and reflects command changes", async (testContext) => {
+  const fixture = await serverFixture(testContext);
+  const initial = await fetch(`${fixture.baseUrl}/api/geo-state`);
+  fixture.storage.setGeoHidden(false);
+  const shown = await fetch(`${fixture.baseUrl}/api/geo-state`);
+  const rejected = await fetch(`${fixture.baseUrl}/api/geo-state`, { method: "POST" });
+
+  assert.deepEqual(await initial.json(), { hidden: true });
+  assert.deepEqual(await shown.json(), { hidden: false });
+  assert.equal(shown.headers.get("cache-control"), "no-store");
+  assert.equal(rejected.status, 405);
+  assert.equal(rejected.headers.get("allow"), "GET, HEAD");
+});
+
 test("cigarette WebP animations preserve alpha and authored loop behavior", () => {
   const animations = [
     { file: "sig-prew.webp", loop: 0 },

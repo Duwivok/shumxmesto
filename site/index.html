@@ -38,7 +38,7 @@
     <link rel="stylesheet" href="styles.css?v=20260915sig4" />
   </head>
   <body>
-    <main class="app" data-app data-page="loading">
+    <main class="app" data-app data-page="loading" data-geo-locked="true">
       <div class="scene" aria-live="polite">
         <div class="backgrounds" aria-hidden="true">
           <img class="background" data-background="home" data-src="backgrounds/home.png?v=20260915home3" width="780" height="1440" decoding="async" alt="" />
@@ -139,7 +139,7 @@
           <img class="background" data-background="geo" data-src="backgrounds/geo.png?v=20260915geo3" width="780" height="1440" decoding="async" alt="" />
         </div>
 
-        <div class="geo-lock-overlay" data-geo-lock-overlay aria-hidden="true">
+        <div class="geo-lock-overlay" data-geo-lock-overlay aria-hidden="false">
           <img class="geo-lock-composite" data-geo-lock-image data-src="backgrounds/geo/geo-locked.webp?v=20260915geoback2" width="780" height="1440" decoding="async" alt="" draggable="false" />
         </div>
 
@@ -200,14 +200,6 @@
             />
           </div>
         </div>
-
-        <button class="geo-eye-toggle" data-geo-eye-toggle type="button" aria-label="Показать закрытую версию Гео" aria-pressed="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M2.2 12s3.6-5.2 9.8-5.2 9.8 5.2 9.8 5.2-3.6 5.2-9.8 5.2S2.2 12 2.2 12Z" />
-            <circle cx="12" cy="12" r="2.7" />
-            <path class="geo-eye-slash" d="m4 4 16 16" />
-          </svg>
-        </button>
 
         <div class="timer-system" data-countdown data-effects="on" role="timer" aria-live="off">
           <img
@@ -441,6 +433,6 @@
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260915geohints3"></script>
+    <script type="module" src="app.js?v=20260915geostate1"></script>
   </body>
 </html>

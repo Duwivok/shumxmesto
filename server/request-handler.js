@@ -166,6 +166,16 @@ export function createRequestHandler({
     try {
       const url = new URL(request.url, publicOrigin);
 
+      if (url.pathname === "/api/geo-state" && url.search === "") {
+        if (request.method !== "GET" && request.method !== "HEAD") {
+          request.resume();
+          sendJson(response, 405, { ok: false }, { Allow: "GET, HEAD" });
+          return;
+        }
+        sendJson(response, 200, { hidden: storage.isGeoHidden() });
+        return;
+      }
+
       if (url.pathname === "/api/rsvp-count" && url.search === "") {
         if (request.method !== "GET") {
           request.resume();
@@ -219,7 +229,7 @@ export function createRequestHandler({
           await notifier.sendPlusOne();
         } catch {
           // The claim is deliberately not reset: at-most-once delivery avoids
-          // duplicate organizer messages after an ambiguous Telegram failure.
+          // duplicate group messages after an ambiguous Telegram failure.
         }
       }
 

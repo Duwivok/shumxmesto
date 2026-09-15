@@ -1,7 +1,11 @@
 $BOT_TOKEN = $env:TELEGRAM_BOT_TOKEN
+$GROUP_CHAT_ID = $env:TELEGRAM_GROUP_CHAT_ID
 
 if ([string]::IsNullOrWhiteSpace($BOT_TOKEN)) {
     throw "TELEGRAM_BOT_TOKEN environment variable is not set. Set it before running this script."
+}
+if ([string]::IsNullOrWhiteSpace($GROUP_CHAT_ID)) {
+    throw "TELEGRAM_GROUP_CHAT_ID environment variable is not set. Set it to the target Telegram group ID."
 }
 
 $botInfo = Invoke-RestMethod `
@@ -16,8 +20,6 @@ $APP_LINK = "https://t.me/$($botInfo.result.username)?startapp=home"
 
 Write-Host "Mini App launch link:"
 Write-Host $APP_LINK
-
-$CHANNEL = "@kdsjbfsbdjkfbksjbdfjkb"
 
 $templatePath = Join-Path `
     -Path $PSScriptRoot `
@@ -34,7 +36,7 @@ $richHtml = $richHtml.Replace(
 )
 
 $bodyObject = @{
-    chat_id = $CHANNEL
+    chat_id = $GROUP_CHAT_ID
 
     rich_message = @{
         html = $richHtml

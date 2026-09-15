@@ -6,9 +6,9 @@ import { PerspectiveLayout } from "./perspective.js?v=20260914spill1";
 import { timerWord } from "./timer-words.js?v=20260914cold1";
 
 export const COUNTDOWN_CONFIG = Object.freeze({
-  // No timezone suffix means device-local time. Change this one value when the
-  // final event date is known.
-  targetLocalDateTime: "2026-09-19T23:59:00",
+  // The event is fixed to Moscow time so every device counts down to the same
+  // instant regardless of its local timezone.
+  targetDateTime: "2026-09-19T23:59:00+03:00",
 });
 
 const TIME = Object.freeze({ minute: 60_000, dayInMinutes: 1440, hourInMinutes: 60 });
@@ -40,16 +40,16 @@ async function decodedImage(request) {
 class CountdownTimer {
   constructor(root, config) {
     this.root = root;
-    this.target = new Date(config.targetLocalDateTime);
+    this.target = new Date(config.targetDateTime);
     this.active = false;
     this.destroyed = false;
     this.timeout = 0;
     this.screens = new Map();
     if (Number.isNaN(this.target.getTime())) {
-      throw new Error(`Некорректная дата таймера: ${config.targetLocalDateTime}`);
+      throw new Error(`Некорректная дата таймера: ${config.targetDateTime}`);
     }
 
-    root.dataset.targetLocal = config.targetLocalDateTime;
+    root.dataset.target = config.targetDateTime;
     root.querySelectorAll("[data-timer-screen]").forEach((element) => {
       const name = element.dataset.timerScreen;
       this.screens.set(name, {

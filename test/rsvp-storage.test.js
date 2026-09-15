@@ -35,12 +35,22 @@ test("parallel calls with one voteId are idempotent", async (testContext) => {
   assert.equal(storage.getCount(), 1);
 });
 
-test("an organizer notification can be claimed only once", (testContext) => {
+test("a group notification can be claimed only once", (testContext) => {
   const storage = temporaryStorage(testContext);
   storage.recordVote(VOTE_ID);
 
   assert.equal(storage.claimNotification(VOTE_ID), true);
   assert.equal(storage.claimNotification(VOTE_ID), false);
+});
+
+test("Geo starts hidden and preserves visibility changes", (testContext) => {
+  const storage = temporaryStorage(testContext);
+
+  assert.equal(storage.isGeoHidden(), true);
+  storage.setGeoHidden(false);
+  assert.equal(storage.isGeoHidden(), false);
+  storage.setGeoHidden(true);
+  assert.equal(storage.isGeoHidden(), true);
 });
 
 test("finalization deletes attempt IDs but preserves the aggregate", (testContext) => {
