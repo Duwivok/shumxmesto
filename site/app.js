@@ -22,6 +22,7 @@ const timerGlowVideo = document.querySelector("[data-timer-glow-video]");
 const cigaretteButton = document.querySelector("[data-cigarette]");
 const cigarettePoster = document.querySelector("[data-cigarette-poster]");
 const cigaretteIdleImage = document.querySelector("[data-cigarette-idle]");
+const cigaretteIdleVideo = document.querySelector("[data-cigarette-idle-video]");
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
 const cigaretteVideo = document.querySelector("[data-cigarette-video]");
 const cigaretteDefaultLabel = cigaretteButton.getAttribute("aria-label");
@@ -35,15 +36,21 @@ let cigaretteResetTimer = 0;
 let cigaretteIdleLoopTimer = 0;
 let cigaretteHasBeenPressed = false;
 let cigaretteIdleIntroHasStarted = false;
+let cigaretteIdleVideoReadyPromise = null;
 let cigaretteAnimationReadyPromise = null;
+let cigaretteIdleVideoObjectUrl = "";
+let cigaretteAnimationVideoObjectUrl = "";
+let cigaretteIdleStarting = false;
 let barImagesReadyPromise = null;
 let barAnimationImagesReadyPromise = null;
 let barVideosPrepared = false;
 let geoLockAssetsPromise = null;
 let animatedImagePlaybackId = 0;
 
-const CIGARETTE_ANIMATION_DURATION = 4000;
+const CIGARETTE_IMAGE_ANIMATION_DURATION = 4000;
+const CIGARETTE_VIDEO_ANIMATION_DURATION = 3000;
 const CIGARETTE_IDLE_INTRO_DURATION = 2300;
+const CIGARETTE_VIDEO_END_GRACE = 1000;
 
 function supportsWebmVideo(video) {
   return typeof video?.canPlayType === "function"
@@ -51,7 +58,10 @@ function supportsWebmVideo(video) {
 }
 
 const barAnimationFormat = "image";
-let cigaretteAnimationFormat = "image";
+let cigaretteAnimationFormat = supportsWebmVideo(cigaretteIdleVideo)
+  && supportsWebmVideo(cigaretteVideo)
+  ? "video"
+  : "image";
 
 barVideos.forEach((video) => {
   video.closest("[data-bar-cocktail]")?.setAttribute("data-animation-format", barAnimationFormat);
@@ -59,12 +69,35 @@ barVideos.forEach((video) => {
 cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
 
 function useCigaretteImageFallback() {
+  if (cigaretteAnimationFormat === "image") {
+    return;
+  }
+
   cigaretteAnimationFormat = "image";
   cigaretteButton.dataset.animationFormat = cigaretteAnimationFormat;
+  cigaretteButton.classList.remove("is-idle");
+  cigaretteIdleVideoReadyPromise = null;
   cigaretteAnimationReadyPromise = null;
+  cigaretteIdleVideo.pause();
+  cigaretteIdleVideo.removeAttribute("src");
+  cigaretteIdleVideo.load();
   cigaretteVideo.pause();
   cigaretteVideo.removeAttribute("src");
   cigaretteVideo.load();
+
+  if (cigaretteIdleVideoObjectUrl) {
+    URL.revokeObjectURL(cigaretteIdleVideoObjectUrl);
+    cigaretteIdleVideoObjectUrl = "";
+  }
+  if (cigaretteAnimationVideoObjectUrl) {
+    URL.revokeObjectURL(cigaretteAnimationVideoObjectUrl);
+    cigaretteAnimationVideoObjectUrl = "";
+  }
+
+  if (!cigaretteHasBeenPressed && app.dataset.page === "rsvp") {
+    startCigaretteIdle();
+  }
+  prepareCigaretteAnimation().catch((error) => console.error(error));
 }
 
 function waitForVideoData(video) {
@@ -91,6 +124,59 @@ function waitForVideoData(video) {
   });
 }
 
+async function loadCigaretteVideo(video, source) {
+  // Fully buffer these short alpha videos before exposing them. This avoids a
+  // cold mobile connection changing the authored playback speed mid-shot.
+  const response = await fetch(source, { cache: "force-cache" });
+  if (!response.ok) {
+    throw new Error(`Could not preload the cigarette animation: ${response.status}`);
+  }
+
+  const objectUrl = URL.createObjectURL(await response.blob());
+  video.src = objectUrl;
+  video.preload = "auto";
+  video.load();
+
+  try {
+    await waitForVideoData(video);
+  } catch (error) {
+    video.removeAttribute("src");
+    video.load();
+    URL.revokeObjectURL(objectUrl);
+    throw error;
+  }
+
+  return objectUrl;
+}
+
+function prepareCigaretteIdleVideo() {
+  if (cigaretteIdleVideoReadyPromise) {
+    return cigaretteIdleVideoReadyPromise;
+  }
+
+  const preparation = loadCigaretteVideo(
+    cigaretteIdleVideo,
+    cigaretteIdleVideo.dataset.src,
+  ).then((objectUrl) => {
+    if (cigaretteAnimationFormat !== "video") {
+      cigaretteIdleVideo.removeAttribute("src");
+      cigaretteIdleVideo.load();
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+    cigaretteIdleVideoObjectUrl = objectUrl;
+  });
+
+  const readyPromise = preparation.catch((error) => {
+    if (cigaretteIdleVideoReadyPromise === readyPromise) {
+      cigaretteIdleVideoReadyPromise = null;
+    }
+    throw error;
+  });
+  cigaretteIdleVideoReadyPromise = readyPromise;
+  return cigaretteIdleVideoReadyPromise;
+}
+
 function prepareCigaretteAnimation() {
   if (cigaretteAnimationReadyPromise) {
     return cigaretteAnimationReadyPromise;
@@ -110,51 +196,84 @@ function prepareCigaretteAnimation() {
         console.debug("The cigarette image is loaded but was not pre-decoded", error);
       }
     })();
-    cigaretteAnimationReadyPromise = preparation.catch((error) => {
-      cigaretteAnimationReadyPromise = null;
+    const readyPromise = preparation.catch((error) => {
+      if (cigaretteAnimationReadyPromise === readyPromise) {
+        cigaretteAnimationReadyPromise = null;
+      }
       throw error;
     });
+    cigaretteAnimationReadyPromise = readyPromise;
     return cigaretteAnimationReadyPromise;
   }
 
-  const preparation = (async () => {
-    // Download the short clip completely before assigning it to <video>.
-    // A Blob-backed source cannot run out of network buffer mid-animation.
-    const response = await fetch(cigaretteVideo.dataset.src, { cache: "force-cache" });
-    if (!response.ok) {
-      throw new Error(`Could not preload the cigarette animation: ${response.status}`);
+  const preparation = loadCigaretteVideo(
+    cigaretteVideo,
+    cigaretteVideo.dataset.src,
+  ).then((objectUrl) => {
+    if (cigaretteAnimationFormat !== "video") {
+      cigaretteVideo.removeAttribute("src");
+      cigaretteVideo.load();
+      URL.revokeObjectURL(objectUrl);
+      return;
     }
-
-    const blob = await response.blob();
-    cigaretteVideo.src = URL.createObjectURL(blob);
-    cigaretteVideo.preload = "auto";
-    cigaretteVideo.load();
-    await waitForVideoData(cigaretteVideo);
-  })();
-  cigaretteAnimationReadyPromise = preparation.catch((error) => {
-    cigaretteAnimationReadyPromise = null;
+    cigaretteAnimationVideoObjectUrl = objectUrl;
+  });
+  const readyPromise = preparation.catch((error) => {
+    if (cigaretteAnimationReadyPromise === readyPromise) {
+      cigaretteAnimationReadyPromise = null;
+    }
     throw error;
   });
+  cigaretteAnimationReadyPromise = readyPromise;
 
   return cigaretteAnimationReadyPromise;
 }
 
 function finishCigaretteAnimation() {
   window.clearTimeout(cigaretteResetTimer);
+  cigaretteResetTimer = 0;
   cigaretteImage.onload = null;
   cigaretteImage.onerror = null;
   cigaretteButton.classList.add("is-playing");
 }
 
-function waitForCigaretteAnimation() {
+function waitForCigaretteImageAnimation() {
   return new Promise((resolve) => {
-    window.setTimeout(resolve, CIGARETTE_ANIMATION_DURATION);
+    cigaretteResetTimer = window.setTimeout(() => {
+      finishCigaretteAnimation();
+      resolve();
+    }, CIGARETTE_IMAGE_ANIMATION_DURATION);
   });
 }
 
-async function playCigaretteAnimationCycle() {
-  await restartCigaretteAnimation();
-  await waitForCigaretteAnimation();
+function waitForCigaretteVideoEnd(playbackId) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const duration = Number.isFinite(cigaretteVideo.duration) && cigaretteVideo.duration > 0
+      ? cigaretteVideo.duration * 1000
+      : CIGARETTE_VIDEO_ANIMATION_DURATION;
+
+    const complete = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      cigaretteVideo.removeEventListener("ended", complete);
+      window.clearTimeout(cigaretteResetTimer);
+      cigaretteResetTimer = 0;
+      if (playbackId === cigarettePlaybackId) {
+        finishCigaretteAnimation();
+      }
+      resolve();
+    };
+
+    cigaretteVideo.addEventListener("ended", complete, { once: true });
+    cigaretteResetTimer = window.setTimeout(
+      complete,
+      duration + CIGARETTE_VIDEO_END_GRACE,
+    );
+  });
 }
 
 function stopCigaretteIdle({ discard = false } = {}) {
@@ -162,6 +281,7 @@ function stopCigaretteIdle({ discard = false } = {}) {
   cigaretteIdleLoopTimer = 0;
   cigaretteIdleImage.onload = null;
   cigaretteIdleImage.onerror = null;
+  cigaretteIdleVideo.pause();
   cigaretteButton.classList.remove("is-idle");
 
   if (discard) {
@@ -188,9 +308,54 @@ function startCigaretteIdleLoop() {
 function startCigaretteIdle() {
   if (
     cigaretteHasBeenPressed
+    || document.hidden
     || cigaretteButton.classList.contains("is-playing")
-    || cigaretteIdleImage.hasAttribute("src")
+    || cigaretteButton.classList.contains("is-idle")
   ) {
+    return;
+  }
+
+  if (cigaretteAnimationFormat === "video") {
+    if (cigaretteIdleStarting) {
+      return;
+    }
+
+    cigaretteIdleStarting = true;
+    prepareCigaretteIdleVideo()
+      .then(async () => {
+        if (
+          cigaretteAnimationFormat !== "video"
+          || cigaretteHasBeenPressed
+          || app.dataset.page !== "rsvp"
+        ) {
+          return;
+        }
+
+        try {
+          cigaretteIdleVideo.currentTime = 0;
+        } catch (error) {
+          console.debug("Cigarette preview is not ready to seek yet", error);
+        }
+
+        await cigaretteIdleVideo.play();
+        if (!cigaretteHasBeenPressed && app.dataset.page === "rsvp") {
+          cigaretteButton.classList.add("is-idle");
+        }
+      })
+      .catch((error) => {
+        if (cigaretteAnimationFormat === "video") {
+          console.warn("Could not play the cigarette preview; using image fallback", error);
+          useCigaretteImageFallback();
+        }
+      })
+      .finally(() => {
+        cigaretteIdleStarting = false;
+      });
+    return;
+  }
+
+  if (cigaretteIdleImage.hasAttribute("src")) {
+    cigaretteButton.classList.add("is-idle");
     return;
   }
 
@@ -223,14 +388,27 @@ function startCigaretteIdle() {
     : cigaretteIdleImage.dataset.loopSrc;
 }
 
+function syncCigaretteIdlePlayback() {
+  if (cigaretteHasBeenPressed) {
+    return;
+  }
+
+  if (app.dataset.page !== "rsvp" || document.hidden) {
+    stopCigaretteIdle({ discard: cigaretteAnimationFormat === "image" });
+    return;
+  }
+
+  startCigaretteIdle();
+}
+
 async function restartCigaretteAnimation() {
   const playbackId = ++cigarettePlaybackId;
 
   cigaretteHasBeenPressed = true;
-  stopCigaretteIdle({ discard: true });
   window.clearTimeout(cigaretteResetTimer);
 
   if (cigaretteAnimationFormat === "image") {
+    stopCigaretteIdle({ discard: true });
     cigaretteVideo.pause();
     cigaretteButton.classList.remove("is-playing");
     cigaretteImage.onload = null;
@@ -254,10 +432,7 @@ async function restartCigaretteAnimation() {
     };
     cigaretteButton.classList.add("is-playing");
     cigaretteImage.src = `${cigaretteImage.dataset.src}#play-${playbackId}`;
-    cigaretteResetTimer = window.setTimeout(
-      finishCigaretteAnimation,
-      CIGARETTE_ANIMATION_DURATION,
-    );
+    await waitForCigaretteImageAnimation();
     return;
   }
 
@@ -274,31 +449,30 @@ async function restartCigaretteAnimation() {
     return;
   }
 
+  stopCigaretteIdle({ discard: true });
   try {
     cigaretteVideo.currentTime = 0;
   } catch (error) {
     console.debug("Cigarette video is not ready to seek yet", error);
   }
 
-  const playRequest = cigaretteVideo.play();
-
-  if (playRequest) {
-    playRequest
-      .then(() => {
-        if (playbackId === cigarettePlaybackId) {
-          cigaretteButton.classList.add("is-playing");
-        }
-      })
-      .catch((error) => {
-        if (playbackId === cigarettePlaybackId) {
-          cigaretteButton.classList.remove("is-playing");
-        }
-
-        console.error("Could not play the cigarette animation", error);
-      });
-  } else {
-    cigaretteButton.classList.add("is-playing");
+  cigaretteButton.classList.add("is-playing");
+  try {
+    await cigaretteVideo.play();
+  } catch (error) {
+    if (playbackId === cigarettePlaybackId) {
+      cigaretteButton.classList.remove("is-playing");
+    }
+    console.warn("Could not play the cigarette animation; using image fallback", error);
+    useCigaretteImageFallback();
+    return restartCigaretteAnimation();
   }
+
+  await waitForCigaretteVideoEnd(playbackId);
+}
+
+function playCigaretteAnimationCycle() {
+  return restartCigaretteAnimation();
 }
 
 function pageFromHash() {
@@ -357,7 +531,14 @@ function prepareRsvpAssets() {
   if (!cigarettePoster.hasAttribute("src")) {
     cigarettePoster.src = cigarettePoster.dataset.src;
   }
-  prepareCigaretteAnimation().catch((error) => console.error(error));
+  prepareCigaretteAnimation().catch((error) => {
+    if (cigaretteAnimationFormat === "video") {
+      console.warn("Could not preload the cigarette animation; using image fallback", error);
+      useCigaretteImageFallback();
+    } else {
+      console.error(error);
+    }
+  });
   startCigaretteIdle();
 }
 
@@ -493,9 +674,8 @@ function commitPage(nextPage) {
     prepareRsvpAssets();
   } else {
     cigaretteVideo.pause();
-    if (!cigaretteHasBeenPressed) {
-      stopCigaretteIdle({ discard: true });
-    }
+    cigaretteIdleVideo.pause();
+    stopCigaretteIdle({ discard: !cigaretteHasBeenPressed });
   }
 }
 
@@ -644,12 +824,11 @@ cigaretteButton.addEventListener("click", async () => {
     cigaretteButton.setAttribute("aria-label", cigaretteDefaultLabel);
   }
 });
-cigaretteVideo.addEventListener("ended", finishCigaretteAnimation);
-
 window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: false }));
 window.addEventListener("hashchange", () => showPage(pageFromHash(), { updateUrl: false }));
 document.addEventListener("visibilitychange", syncTimerGlowPlayback);
 document.addEventListener("visibilitychange", syncBarPlayback);
+document.addEventListener("visibilitychange", syncCigaretteIdlePlayback);
 
 geoEyeToggle.addEventListener("click", async () => {
   const locked = app.dataset.geoLocked !== "true";

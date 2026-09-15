@@ -158,6 +158,18 @@ test("the same server serves the frontend without cookies", async (testContext) 
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("set-cookie"), null);
   assert.match(html, /data-cigarette/);
+  assert.match(html, /data-cigarette-idle-video/);
+  assert.match(html, /3\/sig-prew\.webm/);
+  assert.match(html, /3\/sig-burn\.webm/);
+
+  const [preview, burn] = await Promise.all([
+    fetch(`${fixture.baseUrl}/3/sig-prew.webm`),
+    fetch(`${fixture.baseUrl}/3/sig-burn.webm`),
+  ]);
+  assert.equal(preview.status, 200);
+  assert.equal(preview.headers.get("content-type"), "video/webm");
+  assert.equal(burn.status, 200);
+  assert.equal(burn.headers.get("content-type"), "video/webm");
 });
 
 test("the public client does not contain Telegram secrets or profile access", () => {
