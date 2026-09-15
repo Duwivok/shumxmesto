@@ -33,6 +33,24 @@ server {
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
     add_header Strict-Transport-Security "max-age=31536000" always;
 
+    location = /api/rsvp-count {
+        proxy_pass http://127.0.0.1:3000/api/rsvp-count;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+
+        # The count is public, but visitor headers still stay outside the app.
+        proxy_set_header Cookie "";
+        proxy_set_header Referer "";
+        proxy_set_header User-Agent "";
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header X-Real-IP "";
+        proxy_hide_header Set-Cookie;
+
+        access_log off;
+        error_log /dev/null emerg;
+    }
+
     location = /api/rsvp {
         client_max_body_size 256;
         error_page 413 = @rsvp_body_too_large;
