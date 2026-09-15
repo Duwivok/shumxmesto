@@ -27,7 +27,6 @@ const timerGlow = document.querySelector("[data-timer-glow]");
 const timerGlowImage = document.querySelector("[data-timer-glow-image]");
 const timerGlowVideo = document.querySelector("[data-timer-glow-video]");
 const cigaretteButton = document.querySelector("[data-cigarette]");
-const cigarettePoster = document.querySelector("[data-cigarette-poster]");
 const cigaretteIdleImage = document.querySelector("[data-cigarette-idle]");
 const cigaretteIdleVideo = document.querySelector("[data-cigarette-idle-video]");
 const cigaretteImage = document.querySelector("[data-cigarette-image]");
@@ -548,9 +547,6 @@ function ensureHomeExperience() {
 }
 
 function prepareRsvpAssets() {
-  if (!cigarettePoster.hasAttribute("src")) {
-    cigarettePoster.src = cigarettePoster.dataset.src;
-  }
   prepareCigaretteAnimation().catch((error) => {
     if (cigaretteAnimationFormat === "video") {
       console.warn("Could not preload the cigarette animation; using image fallback", error);
