@@ -9,11 +9,11 @@
     <script>
       (() => {
         const sources = {
-          home: "backgrounds/home.png?v=a7f5261173",
+          home: "backgrounds/home.png?v=20260915home2",
           lineup: "backgrounds/lineup.png?v=7d078d4963",
-          bar: "backgrounds/bar/back.png?v=20260914bar1",
+          bar: "backgrounds/bar.png?v=20260915bar4",
           rsvp: "backgrounds/rsvp.png?v=4099bfd00d",
-          geo: "backgrounds/geo.png?v=20260915geoback2",
+          geo: "backgrounds/geo.png?v=20260915geo3",
         };
         const requestedPage = window.location.hash.slice(1).toLowerCase();
         const initialPage = Object.prototype.hasOwnProperty.call(sources, requestedPage)
@@ -35,19 +35,19 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260915geohints3" />
+    <link rel="stylesheet" href="styles.css?v=20260915bar3" />
   </head>
   <body>
     <main class="app" data-app data-page="loading">
       <div class="scene" aria-live="polite">
         <div class="backgrounds" aria-hidden="true">
-          <img class="background" data-background="home" data-src="backgrounds/home.png?v=a7f5261173" width="780" height="1440" decoding="async" alt="" />
+          <img class="background" data-background="home" data-src="backgrounds/home.png?v=20260915home2" width="780" height="1440" decoding="async" alt="" />
           <img class="background" data-background="lineup" data-src="backgrounds/lineup.png?v=7d078d4963" width="780" height="1440" decoding="async" alt="" />
-          <div class="background bar-background" data-background="bar" data-bar-background>
+          <div class="background bar-background" data-background="bar">
             <img
               class="bar-layer bar-back"
               data-bar-image="back"
-              data-src="backgrounds/bar/back.png?v=20260914bar1"
+              data-src="backgrounds/bar.png?v=20260915bar4"
               width="780"
               height="1772"
               decoding="async"
@@ -55,9 +55,9 @@
               draggable="false"
             />
 
-            <div class="bar-cocktail bar-cocktail--martine" data-bar-cocktail>
+            <div class="bar-animation bar-animation--cocktail" data-bar-cocktail data-animation-format="image">
               <img
-                class="bar-layer bar-cocktail-poster"
+                class="bar-layer bar-animation-poster"
                 data-bar-image="cocktail-poster"
                 data-src="backgrounds/bar/coctail.png?v=20260914bar1"
                 width="780"
@@ -67,34 +67,21 @@
                 draggable="false"
               />
               <img
-                class="bar-cocktail-animation"
+                class="bar-animation-media"
                 data-bar-animation-image
-                data-src="backgrounds/bar/cocktail-animation.webp?v=20260915allwebp1"
+                data-src="backgrounds/bar/cocktail-animation.webp?v=20260915bar3"
                 width="384"
                 height="432"
                 decoding="async"
                 alt=""
                 draggable="false"
               />
-              <video
-                class="bar-cocktail-video"
-                data-bar-video
-                data-src="backgrounds/bar/cocktail-pingpong.webm?v=20260914pingpong1"
-                preload="none"
-                autoplay
-                loop
-                muted
-                playsinline
-                webkit-playsinline
-                disablepictureinpicture
-                aria-hidden="true"
-              ></video>
             </div>
 
-            <div class="bar-cocktail bar-cocktail--pour" data-bar-cocktail>
+            <div class="bar-animation bar-animation--infusion" data-bar-cocktail data-animation-format="image">
               <img
-                class="bar-layer bar-cocktail-poster"
-                data-bar-image="nastoika-poster"
+                class="bar-layer bar-animation-poster"
+                data-bar-image="infusion-poster"
                 data-src="backgrounds/bar/nastoika.png?v=20260914bar1"
                 width="780"
                 height="1772"
@@ -103,7 +90,20 @@
                 draggable="false"
               />
               <img
-                class="bar-layer bar-cocktail-poster"
+                class="bar-animation-media"
+                data-bar-animation-image
+                data-src="backgrounds/bar/nastoika-animation.webp?v=20260915bar3"
+                width="320"
+                height="320"
+                decoding="async"
+                alt=""
+                draggable="false"
+              />
+            </div>
+
+            <div class="bar-animation bar-animation--lemon" data-bar-cocktail data-animation-format="image">
+              <img
+                class="bar-layer bar-animation-poster"
                 data-bar-image="lemon-poster"
                 data-src="backgrounds/bar/lemon.png?v=20260915lemon1"
                 width="780"
@@ -113,11 +113,11 @@
                 draggable="false"
               />
               <img
-                class="bar-cocktail-animation"
+                class="bar-animation-media"
                 data-bar-animation-image
-                data-src="backgrounds/bar/pour-animation.webp?v=20260915lemon1"
-                width="320"
-                height="500"
+                data-src="backgrounds/bar/lemon-animation.webp?v=20260915bar4"
+                width="360"
+                height="480"
                 decoding="async"
                 alt=""
                 draggable="false"
@@ -136,7 +136,7 @@
             />
           </div>
           <img class="background" data-background="rsvp" data-src="backgrounds/rsvp.png?v=4099bfd00d" width="780" height="1440" decoding="async" alt="" />
-          <img class="background" data-background="geo" data-src="backgrounds/geo.png?v=20260915geoback2" width="780" height="1440" decoding="async" alt="" />
+          <img class="background" data-background="geo" data-src="backgrounds/geo.png?v=20260915geo3" width="780" height="1440" decoding="async" alt="" />
         </div>
 
         <div class="geo-lock-overlay" data-geo-lock-overlay aria-hidden="true">

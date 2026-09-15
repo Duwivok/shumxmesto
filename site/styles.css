@@ -89,13 +89,14 @@ button {
   top: 0;
   left: 0;
   aspect-ratio: 780 / 1772;
+  width: 100%;
   height: auto;
   min-height: 100%;
   overflow: hidden;
 }
 
 .bar-layer,
-.bar-cocktail {
+.bar-animation {
   position: absolute;
   inset: 0;
   display: block;
@@ -110,50 +111,48 @@ button {
   z-index: 0;
 }
 
-.bar-cocktail {
+.bar-animation {
   z-index: 1;
 }
 
-.bar-cocktail-poster {
-  z-index: 1;
+.bar-animation-poster {
   opacity: 1;
 }
 
-.bar-cocktail-animation,
-.bar-cocktail-video {
+.bar-animation-media {
   position: absolute;
   z-index: 2;
   display: block;
+  height: auto;
   max-width: none;
   opacity: 0;
   pointer-events: none;
   transition: opacity 120ms linear;
 }
 
-/* The animation canvases have different transparent padding. These values map
-   their fixed alpha bounds onto the matching 780 x 1772 PNG references. */
-.bar-cocktail--martine .bar-cocktail-animation,
-.bar-cocktail--martine .bar-cocktail-video {
+.bar-animation--cocktail .bar-animation-media {
   top: 14.647%;
   left: -2.927%;
   width: 59.323%;
-  height: 29.377%;
 }
 
-.bar-cocktail--pour .bar-cocktail-animation,
-.bar-cocktail--pour .bar-cocktail-video {
-  top: 11.364%;
+.bar-animation--infusion .bar-animation-media {
+  top: 22.743%;
   left: 48.654%;
   width: 46.154%;
-  height: 31.716%;
 }
 
-.bar-cocktail[data-animation-format="image"].is-playing .bar-cocktail-animation,
-.bar-cocktail[data-animation-format="video"].is-playing .bar-cocktail-video {
+.bar-animation--lemon .bar-animation-media {
+  top: 11.15%;
+  left: 55.4%;
+  width: 32.35%;
+}
+
+.bar-animation.is-playing .bar-animation-media {
   opacity: 1;
 }
 
-.bar-cocktail.is-playing .bar-cocktail-poster {
+.bar-animation.is-playing .bar-animation-poster {
   opacity: 0;
 }
 
