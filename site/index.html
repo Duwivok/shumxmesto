@@ -35,7 +35,7 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260915count1" />
+    <link rel="stylesheet" href="styles.css?v=20260915geohints3" />
   </head>
   <body>
     <main class="app" data-app data-page="loading">
@@ -141,6 +141,64 @@
 
         <div class="geo-lock-overlay" data-geo-lock-overlay aria-hidden="true">
           <img class="geo-lock-composite" data-geo-lock-image data-src="backgrounds/geo/geo-locked.webp?v=20260915geoback2" width="780" height="1440" decoding="async" alt="" draggable="false" />
+        </div>
+
+        <div class="geo-hints" data-geo-hints>
+          <svg class="geo-hint-zones" viewBox="0 0 390 720" aria-label="Зоны подсказок на карте">
+            <path
+              class="geo-hint-zone"
+              data-geo-zone="1"
+              data-phone-src="phone/Phone1.png?v=20260915geohints1"
+              d="M150 374.5V393.5L153.5 413.5L162 428L108.5 451.5L71 393.5L74.5 390.5L91 387.5L108.5 371.5H127.5L150 374.5Z"
+              role="button"
+              aria-label="Открыть подсказку 1"
+              tabindex="-1"
+            />
+            <path
+              class="geo-hint-zone"
+              data-geo-zone="2"
+              data-phone-src="phone/Phone2.png?v=20260915geohints1"
+              d="M265 367L268 375L263 381L268.5 396L237.5 405L210 416.5L186 376L183 372.5L198.5 364L223.5 354L244 349.5L248 361.5L254 370.5L265 367Z"
+              role="button"
+              aria-label="Открыть подсказку 2"
+              tabindex="-1"
+            />
+            <path
+              class="geo-hint-zone"
+              data-geo-zone="3"
+              data-phone-src="phone/Phone3.png?v=20260915geohints1"
+              d="M283 458L291.5 459.5L289 472.5L294.5 484.5L263.5 493.5L236 505H218.5L221 482L205 474.5L209 461L227.5 446L249.5 442.5L283 452.5V458Z"
+              role="button"
+              aria-label="Открыть подсказку 3"
+              tabindex="-1"
+            />
+          </svg>
+
+          <button
+            class="geo-hint-backdrop"
+            data-geo-hint-backdrop
+            type="button"
+            aria-label="Закрыть подсказку"
+            tabindex="-1"
+          ></button>
+
+          <div
+            class="geo-hint-phone"
+            data-geo-hint-phone
+            role="dialog"
+            aria-label="Подсказка"
+            aria-hidden="true"
+            tabindex="-1"
+          >
+            <img
+              data-geo-hint-image
+              width="1380"
+              height="2492"
+              decoding="async"
+              alt=""
+              draggable="false"
+            />
+          </div>
         </div>
 
         <button class="geo-eye-toggle" data-geo-eye-toggle type="button" aria-label="Показать закрытую версию Гео" aria-pressed="false">
@@ -393,6 +451,6 @@
       </div>
     </main>
 
-    <script type="module" src="app.js?v=20260915count1"></script>
+    <script type="module" src="app.js?v=20260915geohints3"></script>
   </body>
 </html>

@@ -16,6 +16,11 @@ const barVideos = [...document.querySelectorAll("[data-bar-video]")];
 const geoLockOverlay = document.querySelector("[data-geo-lock-overlay]");
 const geoLockImage = document.querySelector("[data-geo-lock-image]");
 const geoEyeToggle = document.querySelector("[data-geo-eye-toggle]");
+const geoHints = document.querySelector("[data-geo-hints]");
+const geoHintBackdrop = document.querySelector("[data-geo-hint-backdrop]");
+const geoHintPhone = document.querySelector("[data-geo-hint-phone]");
+const geoHintImage = document.querySelector("[data-geo-hint-image]");
+const geoHintZones = [...document.querySelectorAll("[data-geo-zone]")];
 const navigationUnderlay = document.querySelector("[data-navigation-underlay]");
 const navigation = initNavigation(document.querySelector("[data-navigation]"), (page) => showPage(page));
 const timerGlow = document.querySelector("[data-timer-glow]");
@@ -49,6 +54,8 @@ let barImagesReadyPromise = null;
 let barAnimationImagesReadyPromise = null;
 let barVideosPrepared = false;
 let geoLockAssetsPromise = null;
+let geoHintAssetsPromise = null;
+let geoHintLastTrigger = null;
 let animatedImagePlaybackId = 0;
 
 const CIGARETTE_IMAGE_ANIMATION_DURATION = 3000;
@@ -669,8 +676,77 @@ function prepareGeoLockAssets() {
   return geoLockAssetsPromise;
 }
 
+function geoHintsAreAvailable() {
+  return app.dataset.page === "geo" && app.dataset.geoLocked !== "true";
+}
+
+function syncGeoHintAvailability() {
+  const available = geoHintsAreAvailable() && !geoHints.classList.contains("is-open");
+  geoHintZones.forEach((zone) => {
+    zone.setAttribute("tabindex", available ? "0" : "-1");
+    zone.setAttribute("aria-disabled", String(!available));
+  });
+}
+
+function prepareGeoHintAssets() {
+  if (geoHintAssetsPromise) {
+    return geoHintAssetsPromise;
+  }
+
+  const sources = [...new Set(geoHintZones.map((zone) => zone.dataset.phoneSrc))];
+  const preparation = Promise.all(
+    sources.map((source) => {
+      const image = new Image();
+      image.decoding = "async";
+      return loadDecodedImage(image, source);
+    }),
+  ).then(() => undefined);
+
+  geoHintAssetsPromise = preparation.catch((error) => {
+    geoHintAssetsPromise = null;
+    throw error;
+  });
+  return geoHintAssetsPromise;
+}
+
+function openGeoHint(zone) {
+  if (!geoHintsAreAvailable()) {
+    return;
+  }
+
+  const hintNumber = zone.dataset.geoZone;
+  geoHintLastTrigger = zone;
+  geoHintImage.src = zone.dataset.phoneSrc;
+  geoHintPhone.setAttribute("aria-label", `Подсказка ${hintNumber}`);
+  geoHintPhone.setAttribute("aria-hidden", "false");
+  geoHintBackdrop.setAttribute("tabindex", "0");
+  geoHints.dataset.activeHint = hintNumber;
+  geoHints.classList.add("is-open");
+  syncGeoHintAvailability();
+  geoHintPhone.focus({ preventScroll: true });
+}
+
+function closeGeoHint({ restoreFocus = true } = {}) {
+  if (!geoHints.classList.contains("is-open")) {
+    return;
+  }
+
+  geoHints.classList.remove("is-open");
+  delete geoHints.dataset.activeHint;
+  geoHintPhone.setAttribute("aria-hidden", "true");
+  geoHintBackdrop.setAttribute("tabindex", "-1");
+  syncGeoHintAvailability();
+
+  if (restoreFocus && geoHintsAreAvailable()) {
+    geoHintLastTrigger?.focus({ preventScroll: true });
+  }
+}
+
 function commitPage(nextPage) {
   app.dataset.page = nextPage;
+  if (nextPage !== "geo" || app.dataset.geoLocked === "true") {
+    closeGeoHint({ restoreFocus: false });
+  }
   backgrounds.forEach((background) => {
     background.classList.toggle("is-active", background.dataset.background === nextPage);
   });
@@ -690,6 +766,11 @@ function commitPage(nextPage) {
     cigaretteIdleVideo.pause();
     stopCigaretteIdle({ discard: !cigaretteHasBeenPressed });
   }
+
+  if (nextPage === "geo" && app.dataset.geoLocked !== "true") {
+    prepareGeoHintAssets().catch((error) => console.error("Could not preload Geo hints", error));
+  }
+  syncGeoHintAvailability();
 }
 
 async function showPage(page, { updateUrl = true } = {}) {
@@ -859,6 +940,35 @@ cigaretteButton.addEventListener("click", async () => {
     cigaretteButton.setAttribute("aria-label", cigaretteDefaultLabel);
   }
 });
+
+geoHintZones.forEach((zone) => {
+  zone.addEventListener("click", () => openGeoHint(zone));
+  zone.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+    event.preventDefault();
+    openGeoHint(zone);
+  });
+});
+
+geoHintBackdrop.addEventListener("click", () => closeGeoHint());
+geoHintPhone.addEventListener("click", () => closeGeoHint());
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeGeoHint();
+    return;
+  }
+
+  if (event.key === "Tab" && geoHints.classList.contains("is-open")) {
+    event.preventDefault();
+    const nextFocus = document.activeElement === geoHintBackdrop
+      ? geoHintPhone
+      : geoHintBackdrop;
+    nextFocus.focus({ preventScroll: true });
+  }
+});
+
 window.addEventListener("popstate", () => showPage(pageFromHash(), { updateUrl: false }));
 window.addEventListener("hashchange", () => showPage(pageFromHash(), { updateUrl: false }));
 document.addEventListener("visibilitychange", syncTimerGlowPlayback);
@@ -875,6 +985,9 @@ geoEyeToggle.addEventListener("click", async () => {
       return;
     }
   }
+  if (locked) {
+    closeGeoHint({ restoreFocus: false });
+  }
   app.dataset.geoLocked = String(locked);
   geoLockOverlay.setAttribute("aria-hidden", String(!locked));
   geoEyeToggle.setAttribute("aria-pressed", String(locked));
@@ -882,6 +995,7 @@ geoEyeToggle.addEventListener("click", async () => {
     "aria-label",
     locked ? "Показать открытую версию Гео" : "Показать закрытую версию Гео",
   );
+  syncGeoHintAvailability();
 });
 
 showPage(pageFromHash(), { updateUrl: false });
